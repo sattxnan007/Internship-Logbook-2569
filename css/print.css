@@ -1,0 +1,97 @@
+/* ==========================================================================
+   PRINT STYLESHEET (OFFICIAL INTERNSHIP REPORT EXPORT TO PDF/PRINT)
+   ========================================================================== */
+
+@media print {
+  /* Hide UI chrome */
+  .sidebar,
+  .top-navbar,
+  .view-toolbar,
+  .btn,
+  .change-cover-btn,
+  .toast-container,
+  .modal-overlay,
+  .lightbox-modal,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  .main-wrapper {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .page-content {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .cover-container {
+    height: 100px !important;
+    background: #2b4c7e !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page-header-block {
+    margin-top: -30px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .page-emoji-avatar {
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 2rem !important;
+    background: #ffffff !important;
+    border: 2px solid #ffffff !important;
+  }
+
+  .page-title {
+    font-size: 1.8rem !important;
+    color: #111111 !important;
+  }
+
+  .profile-meta-grid {
+    background: #f8f9fa !important;
+    border: 1px solid #dee2e6 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    page-break-inside: avoid;
+  }
+
+  /* Printable Report Elements */
+  .report-section {
+    page-break-inside: avoid;
+    margin-bottom: 24pt;
+  }
+
+  .report-task-item {
+    border: 1px solid #ccc !important;
+    padding: 14pt !important;
+    margin-bottom: 16pt !important;
+    page-break-inside: avoid;
+    border-radius: 6px;
+  }
+
+  .report-task-image {
+    max-height: 220px !important;
+    object-fit: contain !important;
+    margin: 10pt 0 !important;
+    page-break-inside: avoid;
+  }
+
+  .callout-box {
+    border: 1px solid #ddd !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
