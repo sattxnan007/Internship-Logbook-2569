@@ -5,7 +5,7 @@
 
 class StorageManager {
   constructor() {
-    this.LOCAL_KEY = 'ALL_INTERN_DATA_V2';
+    this.LOCAL_KEY = 'ALL_INTERN_DATA_V3';
   }
 
   // Load raw data from LocalStorage (synchronous, instant, zero latency)
@@ -61,7 +61,7 @@ class StorageManager {
   // IndexedDB implementation
   async openDB() {
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open('AllInternModernDB', 1);
+      const req = indexedDB.open('AllInternModernDB_v3', 1);
       req.onupgradeneeded = (e) => {
         const db = e.target.result;
         if (!db.objectStoreNames.contains('store')) {
