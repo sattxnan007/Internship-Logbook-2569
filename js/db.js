@@ -30,31 +30,61 @@ class StorageManager {
   }
 
   async getAllData() {
-    // 1. Try IndexedDB first
+    // 1. Fetch local cached data first (instant fallback)
+    let localData = null;
     try {
-      const idbData = await this.getIdbData();
-      if (idbData && idbData.months && idbData.months.length > 0) {
-        return idbData;
+      localData = await this.getIdbData();
+      if (!localData || !localData.months || localData.months.length === 0) {
+        localData = this.getLocalData();
       }
     } catch (e) {
-      console.warn('IndexedDB read error, falling back to LocalStorage:', e);
+      console.warn('Local read error:', e);
+      localData = this.getLocalData();
     }
 
-    // 2. Fallback to LocalStorage
-    const local = this.getLocalData();
-    if (local && local.months && local.months.length > 0) {
-      return local;
+    // 2. Try fetching from Cloud Firestore if available
+    if (window.firebaseService && typeof window.firebaseService.loadData === 'function') {
+      try {
+        const cloudData = await window.firebaseService.loadData();
+        if (cloudData && cloudData.months && cloudData.months.length > 0) {
+          // Cloud has fresh data! Sync into local storage & IndexedDB
+          this.saveLocalData(cloudData);
+          this.saveIdbData(cloudData).catch(() => {});
+          return cloudData;
+        } else if (localData && localData.months && localData.months.length > 0) {
+          // Cloud is newly created & empty, but local has user data -> Automatically push local data to Cloud!
+          console.log('Pushing local data to initialize Cloud Firestore...');
+          window.firebaseService.saveData(localData).catch(err => {
+            console.warn('Initial cloud sync error:', err);
+          });
+        }
+      } catch (e) {
+        console.warn('Firebase sync error on startup, using local data:', e);
+      }
+    }
+
+    // 3. Fallback to local data
+    if (localData && localData.months && localData.months.length > 0) {
+      return localData;
     }
 
     return null;
   }
 
   async saveAllData(data) {
+    // 1. Instant local save (zero lag in UI)
     this.saveLocalData(data);
     try {
       await this.saveIdbData(data);
     } catch (e) {
       console.warn('IndexedDB save error:', e);
+    }
+
+    // 2. Asynchronous save to Cloud Firestore
+    if (window.firebaseService && typeof window.firebaseService.saveData === 'function') {
+      window.firebaseService.saveData(data).catch(err => {
+        console.warn('Background cloud save failed:', err);
+      });
     }
   }
 

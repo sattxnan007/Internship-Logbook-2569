@@ -7,11 +7,18 @@ class AppController {
     this.editingTaskId = null;
     this.editingWeekId = null;
     this.editingMonthId = null;
-    this.uploadedImageBase64 = null;
+    this.uploadedImages = []; // Array of Base64 strings
+    this.cardSlideIndex = {}; // taskId -> current slide index
+    this.lightboxImages = [];
+    this.lightboxCurrentIndex = 0;
+    this.lightboxCaption = '';
   }
 
   async init() {
-    // 1. Load data from storage
+    // 0. Setup Cloud Sync listener
+    this.setupCloudSyncListener();
+
+    // 1. Load data from storage (syncs with Firestore Cloud if available)
     await window.appState.load();
 
     // 2. Subscribe to state changes for re-rendering
@@ -48,11 +55,22 @@ class AppController {
   }
 
   bindEvents() {
-    // Escape key
+    // Keyboard navigation
     window.addEventListener('keydown', (e) => {
+      const lb = document.getElementById('lightbox-modal');
+      const isLbActive = lb && lb.classList.contains('active');
+
       if (e.key === 'Escape') {
         this.closeAllModals();
         this.closeLightbox();
+      } else if (e.key === 'ArrowLeft') {
+        if (isLbActive) {
+          this.lightboxPrev(e);
+        }
+      } else if (e.key === 'ArrowRight') {
+        if (isLbActive) {
+          this.lightboxNext(e);
+        }
       }
     });
 
@@ -61,12 +79,15 @@ class AppController {
       const taskModal = document.getElementById('task-modal');
       if (taskModal && taskModal.classList.contains('active')) {
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+        const files = [];
         for (const item of items) {
           if (item.kind === 'file' && item.type.startsWith('image/')) {
             const blob = item.getAsFile();
-            this.handleImageFile(blob);
-            break;
+            if (blob) files.push(blob);
           }
+        }
+        if (files.length > 0) {
+          this.handleImageFiles(files);
         }
       }
     });
@@ -89,16 +110,167 @@ class AppController {
     }, 2800);
   }
 
-  openLightbox(imageUrl, caption = '') {
+  // =========================================================================
+  // CARD SLIDER CONTROLS (ON DAILY TASK CARDS)
+  // =========================================================================
+  getCardSlideIndex(taskId) {
+    return this.cardSlideIndex[taskId] || 0;
+  }
+
+  setCardSlide(taskId, newIndex, e) {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    const state = window.appState;
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const images = (task.images && Array.isArray(task.images) && task.images.length > 0)
+      ? task.images
+      : (task.imageUrl ? [task.imageUrl] : []);
+
+    if (images.length <= 1) return;
+
+    const total = images.length;
+    const validIndex = ((newIndex % total) + total) % total;
+    this.cardSlideIndex[taskId] = validIndex;
+
+    const card = document.getElementById(`task-card-${taskId}`);
+    if (!card) return;
+
+    const mainImg = card.querySelector('.card-slide-main-img');
+    const counter = card.querySelector('.card-slide-counter');
+    const thumbs = card.querySelectorAll('.card-thumb-item');
+
+    if (mainImg) {
+      mainImg.src = images[validIndex];
+    }
+    if (counter) {
+      counter.textContent = `📷 ${validIndex + 1} / ${total}`;
+    }
+    thumbs.forEach((th, idx) => {
+      if (idx === validIndex) {
+        th.classList.add('active');
+      } else {
+        th.classList.remove('active');
+      }
+    });
+  }
+
+  prevCardSlide(taskId, e) {
+    const current = this.getCardSlideIndex(taskId);
+    this.setCardSlide(taskId, current - 1, e);
+  }
+
+  nextCardSlide(taskId, e) {
+    const current = this.getCardSlideIndex(taskId);
+    this.setCardSlide(taskId, current + 1, e);
+  }
+
+  // =========================================================================
+  // LIGHTBOX GALLERY (HIGH CONTRAST & THUMBNAILS)
+  // =========================================================================
+  openLightboxGallery(taskId, activeIndex = 0) {
+    const state = window.appState;
+    const task = state.tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    const images = (task.images && Array.isArray(task.images) && task.images.length > 0)
+      ? task.images
+      : (task.imageUrl ? [task.imageUrl] : []);
+
+    if (images.length === 0) return;
+
+    this.lightboxImages = images;
+    this.lightboxCurrentIndex = Math.max(0, Math.min(activeIndex, images.length - 1));
+    this.lightboxCaption = task.description || task.title || 'ภาพการปฏิบัติงาน';
+
+    this.updateLightboxUI();
+
     const modal = document.getElementById('lightbox-modal');
+    if (modal) modal.classList.add('active');
+  }
+
+  openLightbox(imageUrl, caption = '') {
+    if (!imageUrl) return;
+    this.lightboxImages = [imageUrl];
+    this.lightboxCurrentIndex = 0;
+    this.lightboxCaption = caption;
+
+    this.updateLightboxUI();
+
+    const modal = document.getElementById('lightbox-modal');
+    if (modal) modal.classList.add('active');
+  }
+
+  setLightboxIndex(index) {
+    if (index >= 0 && index < this.lightboxImages.length) {
+      this.lightboxCurrentIndex = index;
+      this.updateLightboxUI();
+    }
+  }
+
+  updateLightboxUI() {
     const img = document.getElementById('lightbox-img');
     const captionElem = document.getElementById('lightbox-caption');
+    const counterElem = document.getElementById('lightbox-counter');
+    const prevBtn = document.getElementById('lightbox-prev-btn');
+    const nextBtn = document.getElementById('lightbox-next-btn');
+    const thumbsContainer = document.getElementById('lightbox-thumbs-container');
 
-    if (modal && img) {
-      img.src = imageUrl;
-      if (captionElem) captionElem.textContent = caption;
-      modal.classList.add('active');
+    const total = this.lightboxImages.length;
+    const currentUrl = this.lightboxImages[this.lightboxCurrentIndex] || '';
+
+    if (img) img.src = currentUrl;
+    if (captionElem) captionElem.textContent = this.lightboxCaption;
+
+    if (counterElem) {
+      if (total > 1) {
+        counterElem.style.display = 'block';
+        counterElem.textContent = `📷 รูปที่ ${this.lightboxCurrentIndex + 1} จาก ${total}`;
+      } else {
+        counterElem.style.display = 'none';
+      }
     }
+
+    if (prevBtn && nextBtn) {
+      if (total > 1) {
+        prevBtn.style.display = 'flex';
+        nextBtn.style.display = 'flex';
+      } else {
+        prevBtn.style.display = 'none';
+        nextBtn.style.display = 'none';
+      }
+    }
+
+    if (thumbsContainer) {
+      if (total > 1) {
+        thumbsContainer.style.display = 'flex';
+        thumbsContainer.innerHTML = this.lightboxImages.map((u, idx) => `
+          <div class="lightbox-thumb-item ${idx === this.lightboxCurrentIndex ? 'active' : ''}" onclick="window.appController.setLightboxIndex(${idx})" title="ดูรูปที่ ${idx + 1}">
+            <img src="${u}" alt="thumb ${idx + 1}">
+          </div>
+        `).join('');
+      } else {
+        thumbsContainer.style.display = 'none';
+        thumbsContainer.innerHTML = '';
+      }
+    }
+  }
+
+  lightboxPrev(e) {
+    if (e) e.stopPropagation();
+    if (this.lightboxImages.length <= 1) return;
+    this.lightboxCurrentIndex = (this.lightboxCurrentIndex - 1 + this.lightboxImages.length) % this.lightboxImages.length;
+    this.updateLightboxUI();
+  }
+
+  lightboxNext(e) {
+    if (e) e.stopPropagation();
+    if (this.lightboxImages.length <= 1) return;
+    this.lightboxCurrentIndex = (this.lightboxCurrentIndex + 1) % this.lightboxImages.length;
+    this.updateLightboxUI();
   }
 
   closeLightbox() {
@@ -111,7 +283,7 @@ class AppController {
     this.editingTaskId = null;
     this.editingWeekId = null;
     this.editingMonthId = null;
-    this.uploadedImageBase64 = null;
+    this.uploadedImages = [];
   }
 
   populateWeekSelect(selectedWeekId) {
@@ -144,11 +316,11 @@ class AppController {
   }
 
   // =========================================================================
-  // TASK MODAL (1 Image + 1 Description)
+  // TASK MODAL (MULTIPLE IMAGES + 1 DESCRIPTION)
   // =========================================================================
   openAddTaskModal(targetWeekId) {
     this.editingTaskId = null;
-    this.uploadedImageBase64 = null;
+    this.uploadedImages = [];
 
     const form = document.getElementById('task-form');
     if (form) form.reset();
@@ -158,14 +330,7 @@ class AppController {
       dateInput.value = new Date().toISOString().split('T')[0];
     }
 
-    const previewContainer = document.getElementById('task-image-preview');
-    if (previewContainer) {
-      previewContainer.innerHTML = '';
-      previewContainer.style.display = 'none';
-    }
-
-    const dropzone = document.getElementById('task-image-dropzone');
-    if (dropzone) dropzone.style.display = 'flex';
+    this.renderImagePreviews();
 
     document.getElementById('task-modal-title').innerHTML = '📝 เพิ่มบันทึกงานประจำวัน (Daily Task)';
 
@@ -181,7 +346,9 @@ class AppController {
     if (!task) return;
 
     this.editingTaskId = taskId;
-    this.uploadedImageBase64 = task.imageUrl || null;
+    this.uploadedImages = (task.images && Array.isArray(task.images) && task.images.length > 0)
+      ? [...task.images]
+      : (task.imageUrl ? [task.imageUrl] : []);
 
     document.getElementById('task-modal-title').innerHTML = '✏️ แก้ไขบันทึกงานประจำวัน';
     this.populateWeekSelect(task.weekId);
@@ -190,127 +357,172 @@ class AppController {
     document.getElementById('task-date').value = task.date || new Date().toISOString().split('T')[0];
     document.getElementById('task-description').value = task.description || '';
 
+    this.renderImagePreviews();
+
+    document.getElementById('task-modal').classList.add('active');
+  }
+
+  renderImagePreviews() {
     const previewContainer = document.getElementById('task-image-preview');
     const dropzone = document.getElementById('task-image-dropzone');
+    const countLabel = document.getElementById('task-image-count-label');
 
-    if (task.imageUrl && previewContainer) {
-      previewContainer.style.display = 'block';
-      previewContainer.innerHTML = `
-        <div class="image-preview-box">
-          <img src="${task.imageUrl}" alt="preview">
-          <button type="button" class="remove-image-btn" onclick="window.appController.removeTaskImage()">❌ ลบรูปภาพ</button>
-        </div>
-      `;
-      if (dropzone) dropzone.style.display = 'none';
-    } else {
+    if (countLabel) {
+      countLabel.textContent = this.uploadedImages.length > 0 ? `(แนบแล้ว ${this.uploadedImages.length} รูป)` : '';
+    }
+
+    if (this.uploadedImages.length === 0) {
       if (previewContainer) {
         previewContainer.innerHTML = '';
         previewContainer.style.display = 'none';
       }
       if (dropzone) dropzone.style.display = 'flex';
+      return;
     }
 
-    document.getElementById('task-modal').classList.add('active');
+    if (dropzone) dropzone.style.display = 'none';
+    if (previewContainer) {
+      previewContainer.style.display = 'block';
+      let html = `<div class="modal-images-grid">`;
+      this.uploadedImages.forEach((imgUrl, index) => {
+        html += `
+          <div class="modal-image-card">
+            <span class="modal-img-num">รูปที่ #${index + 1}</span>
+            <img src="${imgUrl}" alt="preview ${index + 1}">
+            <button type="button" class="modal-img-del-btn" onclick="window.appController.removeTaskImage(${index})" title="ลบรูปภาพนี้">
+              🗑️ ลบ
+            </button>
+          </div>
+        `;
+      });
+      html += `
+        </div>
+        <div class="modal-add-more-zone" onclick="document.getElementById('task-image-file').click()">
+          <span style="font-size: 1.2rem;">➕</span>
+          <span>คลิกเพื่อเลือกรูปภาพเพิ่ม (หรือลากไฟล์มาวาง / กด Ctrl+V)</span>
+        </div>
+      `;
+      previewContainer.innerHTML = html;
+    }
   }
 
   setupImageDropzone() {
     const dropzone = document.getElementById('task-image-dropzone');
+    const previewContainer = document.getElementById('task-image-preview');
     const fileInput = document.getElementById('task-image-file');
 
-    if (!dropzone || !fileInput) return;
+    if (!fileInput) return;
 
-    dropzone.addEventListener('click', () => fileInput.click());
+    if (dropzone) {
+      dropzone.addEventListener('click', () => fileInput.click());
 
-    dropzone.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropzone.classList.add('dragover');
-    });
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
 
-    dropzone.addEventListener('dragleave', () => {
-      dropzone.classList.remove('dragover');
-    });
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+      });
 
-    dropzone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropzone.classList.remove('dragover');
-      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-        this.handleImageFile(e.dataTransfer.files[0]);
-      }
-    });
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          this.handleImageFiles(e.dataTransfer.files);
+        }
+      });
+    }
+
+    if (previewContainer) {
+      previewContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+      });
+
+      previewContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          this.handleImageFiles(e.dataTransfer.files);
+        }
+      });
+    }
 
     fileInput.addEventListener('change', (e) => {
-      if (e.target.files && e.target.files[0]) {
-        this.handleImageFile(e.target.files[0]);
+      if (e.target.files && e.target.files.length > 0) {
+        this.handleImageFiles(e.target.files);
+        fileInput.value = ''; // Reset to allow selecting same files again if needed
       }
     });
   }
 
-  handleImageFile(file) {
-    if (!file || !file.type.startsWith('image/')) {
+  async handleImageFiles(fileList) {
+    const files = Array.from(fileList).filter(f => f && f.type && f.type.startsWith('image/'));
+
+    if (files.length === 0) {
       this.showToast('กรุณาเลือกไฟล์รูปภาพเท่านั้น', 'error');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxDimension = 1200;
-        let width = img.width;
-        let height = img.height;
+    this.showToast(`กำลังโหลดและบีบอัดรูปภาพ (${files.length} รูป)...`);
 
-        if (width > maxDimension || height > maxDimension) {
-          if (width > height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
-          } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
-          }
-        }
+    const processSingleImage = (file) => {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxDimension = 1000;
+            let width = img.width;
+            let height = img.height;
 
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
+            if (width > maxDimension || height > maxDimension) {
+              if (width > height) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              } else {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+              }
+            }
 
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        this.uploadedImageBase64 = compressedDataUrl;
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
 
-        const previewContainer = document.getElementById('task-image-preview');
-        const dropzone = document.getElementById('task-image-dropzone');
-
-        if (previewContainer) {
-          previewContainer.style.display = 'block';
-          previewContainer.innerHTML = `
-            <div class="image-preview-box">
-              <img src="${compressedDataUrl}" alt="uploaded preview">
-              <button type="button" class="remove-image-btn" onclick="window.appController.removeTaskImage()">❌ ลบรูปภาพ</button>
-            </div>
-          `;
-        }
-        if (dropzone) dropzone.style.display = 'none';
-        this.showToast('แนบรูปภาพเรียบร้อยแล้ว');
-      };
-      img.src = event.target.result;
+            const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.80);
+            resolve(compressedDataUrl);
+          };
+          img.onerror = () => resolve(null);
+          img.src = event.target.result;
+        };
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+      });
     };
-    reader.readAsDataURL(file);
+
+    try {
+      const results = await Promise.all(files.map(f => processSingleImage(f)));
+      const validResults = results.filter(Boolean);
+
+      if (validResults.length > 0) {
+        this.uploadedImages.push(...validResults);
+        this.renderImagePreviews();
+        this.showToast(`แนบรูปภาพเรียบร้อยแล้ว (+${validResults.length} รูป)`);
+      }
+    } catch (err) {
+      console.error('Image processing error:', err);
+      this.showToast('เกิดข้อผิดพลาดในการประมวลผลภาพ', 'error');
+    }
   }
 
-  removeTaskImage() {
-    this.uploadedImageBase64 = null;
-    const fileInput = document.getElementById('task-image-file');
-    if (fileInput) fileInput.value = '';
-    
-    const previewContainer = document.getElementById('task-image-preview');
-    if (previewContainer) {
-      previewContainer.innerHTML = '';
-      previewContainer.style.display = 'none';
+  removeTaskImage(index) {
+    if (index >= 0 && index < this.uploadedImages.length) {
+      this.uploadedImages.splice(index, 1);
+      this.renderImagePreviews();
+      this.showToast('ลบรูปภาพเรียบร้อย');
     }
-
-    const dropzone = document.getElementById('task-image-dropzone');
-    if (dropzone) dropzone.style.display = 'flex';
   }
 
   async saveTaskForm(e) {
@@ -353,6 +565,9 @@ class AppController {
       const dayIndex = new Date(date).getDay();
       const dayName = daysThai[dayIndex] || 'จันทร์';
 
+      const taskImages = [...this.uploadedImages];
+      const primaryImageUrl = taskImages[0] || '';
+
       if (this.editingTaskId) {
         // Edit existing task
         const taskIdx = state.tasks.findIndex(t => t.id === this.editingTaskId);
@@ -363,7 +578,8 @@ class AppController {
             title,
             date,
             dayName,
-            imageUrl: this.uploadedImageBase64 || state.tasks[taskIdx].imageUrl || '',
+            images: taskImages,
+            imageUrl: primaryImageUrl,
             description
           };
         }
@@ -375,7 +591,8 @@ class AppController {
           title,
           date,
           dayName,
-          imageUrl: this.uploadedImageBase64 || '',
+          images: taskImages,
+          imageUrl: primaryImageUrl,
           description
         };
         state.tasks.push(newTask);
@@ -577,6 +794,120 @@ class AppController {
       await window.appState.saveCurrentData();
       window.appState.goToMonths();
       this.showToast('รีเซ็ตข้อมูลตัวอย่างเรียบร้อย');
+    }
+  }
+
+  // =========================================================================
+  // CLOUD SYNC CONTROLLER
+  // =========================================================================
+  setupCloudSyncListener() {
+    if (!window.firebaseService) return;
+
+    window.firebaseService.onStatusChange((status, error) => {
+      const badge = document.getElementById('cloud-status-badge');
+      const dot = document.getElementById('cloud-modal-dot');
+      const title = document.getElementById('cloud-modal-status-title');
+      const desc = document.getElementById('cloud-modal-status-desc');
+
+      if (badge) {
+        badge.className = `cloud-badge cloud-badge-${status}`;
+        if (status === 'connected' || status === 'synced') {
+          badge.textContent = 'ออนไลน์';
+        } else if (status === 'syncing') {
+          badge.textContent = 'กำลังซิงค์...';
+        } else if (status === 'connecting') {
+          badge.textContent = 'เชื่อมต่อ...';
+        } else if (status === 'error') {
+          badge.textContent = 'ติดสิทธิ์ / ข้อผิดพลาด';
+        } else {
+          badge.textContent = 'ออฟไลน์';
+        }
+      }
+
+      if (dot) {
+        dot.className = `cloud-status-indicator-dot ${status}`;
+      }
+
+      if (title && desc) {
+        if (status === 'synced') {
+          title.textContent = '🟢 ซิงค์กับ Cloud Firestore สำเร็จ';
+          desc.textContent = 'ข้อมูลและรูปภาพทั้งหมดอัปเดตตรงกับคลาวด์แล้ว';
+        } else if (status === 'connected') {
+          title.textContent = '🟢 เชื่อมต่อ Cloud สำเร็จแล้ว';
+          desc.textContent = 'พร้อมซิงค์และบันทึกข้อมูลแบบเรียลไทม์';
+        } else if (status === 'syncing') {
+          title.textContent = '🔄 กำลังส่ง/รับข้อมูลกับ Cloud...';
+          desc.textContent = 'กรุณารอสักครู่ กำลังประมวลผลข้อมูล';
+        } else if (status === 'error') {
+          title.textContent = '⚠️ เกิดข้อผิดพลาดในการเชื่อมต่อ Cloud';
+          desc.textContent = error || 'ตรวจสอบการเชื่อมต่ออินเทอร์เน็ตหรือ Security Rules ใน Firebase Console';
+        } else {
+          title.textContent = '🟡 กำลังเชื่อมต่อ...';
+          desc.textContent = 'ระบบกำลังเริ่มต้นการทำงานกับ Firebase';
+        }
+      }
+    });
+  }
+
+  openCloudModal() {
+    const modal = document.getElementById('cloud-modal');
+    if (modal) {
+      modal.classList.add('active');
+    }
+  }
+
+  async syncNow() {
+    if (!window.firebaseService) {
+      this.showToast('ยังไม่ได้เปิดใช้งาน Firebase', 'error');
+      return;
+    }
+    this.showToast('กำลังซิงค์ข้อมูลกับ Cloud...');
+    const cloudData = await window.firebaseService.loadData();
+    if (cloudData && cloudData.months && cloudData.months.length > 0) {
+      window.appState.months = cloudData.months;
+      window.appState.weeks = cloudData.weeks;
+      window.appState.tasks = cloudData.tasks;
+      window.storageManager.saveLocalData(cloudData);
+      await window.storageManager.saveIdbData(cloudData);
+      window.appState.notify();
+      this.showToast('ซิงค์ข้อมูลสำเร็จ!', 'success');
+    } else {
+      await this.forcePushLocalToCloud();
+    }
+  }
+
+  async forcePushLocalToCloud() {
+    if (!window.firebaseService) return;
+    this.showToast('กำลังอัปโหลดข้อมูลในเครื่องขึ้น Cloud...');
+    const data = {
+      months: window.appState.months,
+      weeks: window.appState.weeks,
+      tasks: window.appState.tasks
+    };
+    const success = await window.firebaseService.saveData(data);
+    if (success) {
+      this.showToast('อัปโหลดข้อมูลขึ้น Cloud สำเร็จเรียบร้อย!', 'success');
+    } else {
+      this.showToast('อัปโหลดไม่สำเร็จ: ' + (window.firebaseService.lastError || ''), 'error');
+    }
+  }
+
+  async forcePullCloudToLocal() {
+    if (!window.firebaseService) return;
+    if (!confirm('ต้องการดึงข้อมูลล่าสุดจาก Cloud มาเขียนทับข้อมูลในเครื่องนี้หรือไม่?')) return;
+
+    this.showToast('กำลังดึงข้อมูลจาก Cloud...');
+    const cloudData = await window.firebaseService.loadData();
+    if (cloudData && cloudData.months) {
+      window.appState.months = cloudData.months;
+      window.appState.weeks = cloudData.weeks;
+      window.appState.tasks = cloudData.tasks;
+      window.storageManager.saveLocalData(cloudData);
+      await window.storageManager.saveIdbData(cloudData);
+      window.appState.notify();
+      this.showToast('ดึงข้อมูลจาก Cloud สำเร็จ!', 'success');
+    } else {
+      this.showToast('ไม่พบข้อมูลบน Cloud หรือการเชื่อมต่อมีปัญหา: ' + (window.firebaseService.lastError || ''), 'error');
     }
   }
 }

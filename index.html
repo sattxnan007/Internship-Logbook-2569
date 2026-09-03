@@ -6,10 +6,10 @@
   <title>Internship Tasks | บันทึกผลการปฏิบัติงานฝึกงาน</title>
   <meta name="description" content="ระบบบันทึกผลการปฏิบัติงานฝึกงานสไตล์ Notion แยกรายเดือน รายอาทิตย์ และรายวัน พร้อมแนบรูปภาพและคำอธิบายใต้ภาพ">
   
-  <!-- CSS Stylesheets -->
-  <link rel="stylesheet" href="css/main.css?v=3">
-  <link rel="stylesheet" href="css/components.css?v=3">
-  <link rel="stylesheet" href="css/print.css?v=3">
+  <!-- CSS Stylesheets with Cache Buster -->
+  <link rel="stylesheet" href="css/main.css?v=20260831_v6">
+  <link rel="stylesheet" href="css/components.css?v=20260831_v6">
+  <link rel="stylesheet" href="css/print.css?v=20260831_v6">
 </head>
 <body>
 
@@ -47,7 +47,13 @@
         <!-- Dynamic Tree Navigation -->
         <div id="sidebar-tree"></div>
 
-        <div class="nav-section-title" style="margin-top: 14px;">การจัดการข้อมูล</div>
+        <div class="nav-section-title" style="margin-top: 14px;">การจัดการข้อมูล & คลาวด์</div>
+
+        <div class="nav-item" id="nav-cloud-status" onclick="window.appController.openCloudModal()" title="จัดการการเชื่อมต่อ Cloud Firestore">
+          <span id="cloud-status-icon">☁️</span>
+          <span style="flex: 1;">Cloud Sync</span>
+          <span id="cloud-status-badge" class="cloud-badge cloud-badge-connecting">เชื่อมต่อ...</span>
+        </div>
         
         <div class="nav-item" onclick="window.appController.exportBackup()">
           <span>💾</span>
@@ -114,8 +120,8 @@
        ========================================================================= -->
 
   <!-- 1. SIMPLIFIED DAILY TASK MODAL (1 Image + 1 Description) -->
-  <div class="modal-overlay" id="task-modal">
-    <div class="modal-window">
+  <div class="modal-overlay" id="task-modal" onclick="if(event.target === this) window.appController.closeAllModals()">
+    <div class="modal-window" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3 class="modal-title" id="task-modal-title">📝 บันทึกงานประจำวัน (Daily Task)</h3>
         <button class="modal-close-btn" type="button" onclick="window.appController.closeAllModals()">&times;</button>
@@ -141,16 +147,19 @@
             </div>
           </div>
 
-          <!-- 1 Image Attachment -->
+          <!-- Multiple Images Attachment -->
           <div class="form-group">
-            <label class="form-label">🖼️ รูปภาพผลงาน (1 รูป)</label>
-            <input type="file" id="task-image-file" accept="image/*" style="display: none;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <label class="form-label">🖼️ รูปภาพผลงาน <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">(เลือกได้หลายรูป)</span></label>
+              <span id="task-image-count-label" style="font-size: 0.8rem; color: var(--primary); font-weight: 600;"></span>
+            </div>
+            <input type="file" id="task-image-file" accept="image/*" multiple style="display: none;">
             
-            <div id="task-image-preview" style="display: none;"></div>
+            <div id="task-image-preview" class="modal-images-preview-container" style="display: none;"></div>
             
             <div class="image-upload-zone" id="task-image-dropzone">
               <span style="font-size: 1.6rem;">📷</span>
-              <span style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">คลิกเลือกรูปภาพ หรือ ลากไฟล์รูปมาวางที่นี่</span>
+              <span style="font-weight: 600; font-size: 0.88rem; color: var(--text-main);">คลิกเลือกรูปภาพ (เลือกพร้อมกันหลายรูปได้) หรือ ลากไฟล์รูปมาวาง</span>
               <span style="font-size: 0.78rem; color: var(--text-muted);">(หรือกด Ctrl+V เพื่อวางรูปที่แคปไว้ได้ทันที)</span>
             </div>
           </div>
@@ -171,8 +180,8 @@
   </div>
 
   <!-- 2. MONTH MODAL -->
-  <div class="modal-overlay" id="month-modal">
-    <div class="modal-window">
+  <div class="modal-overlay" id="month-modal" onclick="if(event.target === this) window.appController.closeAllModals()">
+    <div class="modal-window" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3 class="modal-title" id="month-modal-title">📅 จัดการรอบเดือน</h3>
         <button class="modal-close-btn" type="button" onclick="window.appController.closeAllModals()">&times;</button>
@@ -197,8 +206,8 @@
   </div>
 
   <!-- 3. WEEK MODAL -->
-  <div class="modal-overlay" id="week-modal">
-    <div class="modal-window">
+  <div class="modal-overlay" id="week-modal" onclick="if(event.target === this) window.appController.closeAllModals()">
+    <div class="modal-window" onclick="event.stopPropagation()">
       <div class="modal-header">
         <h3 class="modal-title" id="week-modal-title">📆 จัดการสัปดาห์</h3>
         <button class="modal-close-btn" type="button" onclick="window.appController.closeAllModals()">&times;</button>
@@ -223,23 +232,92 @@
     </div>
   </div>
 
-  <!-- 4. LIGHTBOX MODAL -->
+  <!-- 4. CLOUD SYNC MODAL -->
+  <div class="modal-overlay" id="cloud-modal" onclick="if(event.target === this) window.appController.closeAllModals()">
+    <div class="modal-window" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">☁️ การเชื่อมต่อ Cloud Firestore</h3>
+        <button class="modal-close-btn" type="button" onclick="window.appController.closeAllModals()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="cloud-status-box" id="cloud-modal-status-box">
+          <div class="cloud-status-indicator-dot" id="cloud-modal-dot"></div>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 0.95rem;" id="cloud-modal-status-title">กำลังตรวจสอบสถานะ...</div>
+            <div style="font-size: 0.8rem; color: var(--text-sub);" id="cloud-modal-status-desc">ระบบกำลังตรวจสอบการเชื่อมต่อกับ Firebase Firestore</div>
+          </div>
+        </div>
+
+        <div class="cloud-info-grid">
+          <div class="cloud-info-row">
+            <span class="cloud-info-label">Firebase Project ID:</span>
+            <strong id="cloud-modal-project-id">internship-2569-8ab4a</strong>
+          </div>
+          <div class="cloud-info-row">
+            <span class="cloud-info-label">สถาปัตยกรรมข้อมูล:</span>
+            <span>Cloud Firestore + Local IndexedDB</span>
+          </div>
+        </div>
+
+        <div class="cloud-actions-group">
+          <button type="button" class="btn btn-primary" style="justify-content: center; width: 100%;" onclick="window.appController.syncNow()">
+            <span>🔄 ซิงค์ข้อมูลกับ Cloud ทันที</span>
+          </button>
+          <button type="button" class="btn btn-secondary" style="justify-content: center; width: 100%;" onclick="window.appController.forcePushLocalToCloud()">
+            <span>⬆️ อัปโหลดข้อมูลในเครื่องนี้ขึ้น Cloud (Force Push)</span>
+          </button>
+          <button type="button" class="btn btn-secondary" style="justify-content: center; width: 100%;" onclick="window.appController.forcePullCloudToLocal()">
+            <span>⬇️ ดึงข้อมูลล่าสุดจาก Cloud ลงเครื่อง (Force Pull)</span>
+          </button>
+        </div>
+
+        <div id="cloud-rules-notice" class="cloud-notice-box">
+          💡 <strong>เคล็ดลับ:</strong> ข้อมูลทั้งหมดและรูปภาพจะถูกบันทึกขึ้น Firestore อัตโนมัติทุกครั้งที่กดบันทึกงาน ไม่ว่าจะเปิดเว็บจากคอม, มือถือ หรือ Vercel ข้อมูลจะตรงกันเสมอ
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="window.appController.closeAllModals()">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5. LIGHTBOX MODAL (Click anywhere on backdrop to close) -->
   <div class="lightbox-modal" id="lightbox-modal" onclick="window.appController.closeLightbox()">
-    <div class="lightbox-img-wrapper" onclick="event.stopPropagation()">
-      <img id="lightbox-img" src="" alt="Full image">
-      <div id="lightbox-caption" style="color: #fff; font-size: 0.95rem; text-align: center;"></div>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="window.appController.closeLightbox()">✕ ปิดหน้าต่าง</button>
+    <div class="lightbox-top-bar">
+      <div id="lightbox-counter" class="lightbox-counter" onclick="event.stopPropagation()">📷 รูปที่ 1 จาก 1</div>
+      <button type="button" class="lightbox-close-top-btn" onclick="window.appController.closeLightbox()" title="ปิดหน้าต่าง (Esc หรือคลิกพื้นที่ว่าง)">✕ ปิดหน้าต่าง (คลิกพื้นที่ว่างเพื่อปิด)</button>
+    </div>
+
+    <div class="lightbox-content-area">
+      <button type="button" class="lightbox-nav-btn lightbox-prev-btn" id="lightbox-prev-btn" onclick="window.appController.lightboxPrev(event)" title="รูปก่อนหน้า (←)">❮</button>
+      
+      <div class="lightbox-img-box" onclick="event.stopPropagation()">
+        <img id="lightbox-img" src="" alt="Full image">
+      </div>
+
+      <button type="button" class="lightbox-nav-btn lightbox-next-btn" id="lightbox-next-btn" onclick="window.appController.lightboxNext(event)" title="รูปถัดไป (→)">❯</button>
+    </div>
+
+    <div class="lightbox-bottom-bar">
+      <div id="lightbox-caption" class="lightbox-caption" onclick="event.stopPropagation()"></div>
+      <div id="lightbox-thumbs-container" class="lightbox-thumbs-container" onclick="event.stopPropagation()"></div>
     </div>
   </div>
 
   <!-- Toast -->
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- Scripts -->
-  <script src="js/db.js?v=4"></script>
-  <script src="js/sample-data.js?v=4"></script>
-  <script src="js/state.js?v=4"></script>
-  <script src="js/components.js?v=4"></script>
-  <script src="js/app.js?v=4"></script>
+  <!-- Firebase Web SDK (Compat Mode for Vanilla JS) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js?v=20260903_v1"></script>
+  <script src="js/firebase-service.js?v=20260903_v1"></script>
+
+  <!-- App Scripts with Cache Buster -->
+  <script src="js/db.js?v=20260903_v1"></script>
+  <script src="js/sample-data.js?v=20260903_v1"></script>
+  <script src="js/state.js?v=20260903_v1"></script>
+  <script src="js/components.js?v=20260903_v1"></script>
+  <script src="js/app.js?v=20260903_v1"></script>
 </body>
 </html>

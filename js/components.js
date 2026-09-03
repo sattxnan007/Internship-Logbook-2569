@@ -206,7 +206,12 @@ const UI = {
 
     weeks.forEach((week, index) => {
       const tasks = (state.tasks || []).filter(t => t.weekId === week.id);
-      const imagesCount = tasks.filter(t => !!t.imageUrl).length;
+      const imagesCount = tasks.reduce((sum, t) => {
+        if (t.images && Array.isArray(t.images)) {
+          return sum + t.images.length;
+        }
+        return sum + (t.imageUrl ? 1 : 0);
+      }, 0);
 
       html += `
         <div class="week-card" onclick="window.appState.goToWeek('${week.id}', '${month.id}')">
@@ -232,7 +237,7 @@ const UI = {
   },
 
   // --------------------------------------------------------------------------
-  // LEVEL 3: DAILY TASKS VIEW (1 IMAGE + 1 DESCRIPTION UNDER IMAGE)
+  // LEVEL 3: DAILY TASKS VIEW (MULTIPLE IMAGES + 1 DESCRIPTION UNDER IMAGES)
   // --------------------------------------------------------------------------
   renderDailyTasksView(state) {
     const month = state.getCurrentMonth();
@@ -272,20 +277,69 @@ const UI = {
     }
 
     tasks.forEach(task => {
+      const images = (task.images && Array.isArray(task.images) && task.images.length > 0)
+        ? task.images
+        : (task.imageUrl ? [task.imageUrl] : []);
+
+      const activeSlideIndex = (window.appController && window.appController.getCardSlideIndex)
+        ? window.appController.getCardSlideIndex(task.id)
+        : 0;
+
+      const currentImg = images[activeSlideIndex] || images[0] || '';
+
+      let imagesHtml = '';
+
+      if (images.length === 0) {
+        imagesHtml = `
+          <div class="no-image-box" onclick="window.appController.openEditTaskModal('${task.id}')" title="คลิกเพื่อแนบรูปภาพ">
+            <span style="font-size: 1.5rem;">📷</span>
+            <span style="font-weight: 600;">ยังไม่มีรูปภาพ</span>
+            <span style="font-size: 0.8rem; color: var(--primary); text-decoration: underline;">คลิกเพื่อแนบรูปภาพ</span>
+          </div>
+        `;
+      } else if (images.length === 1) {
+        imagesHtml = `
+          <div class="card-slider-wrapper" id="card-slider-${task.id}">
+            <div class="card-main-image-box" onclick="window.appController.openLightboxGallery('${task.id}', 0)" title="คลิกเพื่อดูรูปภาพขนาดใหญ่">
+              <img src="${this.escapeHtml(images[0])}" class="card-slide-main-img" alt="${this.escapeHtml(task.title || 'ภาพผลงาน')}" loading="lazy">
+              <div class="card-image-zoom-hint">🔍 ดูรูปใหญ่</div>
+            </div>
+          </div>
+        `;
+      } else {
+        // 2 or more images: Interactive Slider with Prominent ◀ ▶ Arrows + Thumbnails Row
+        imagesHtml = `
+          <div class="card-slider-wrapper" id="card-slider-${task.id}">
+            <div class="card-main-image-box" onclick="window.appController.openLightboxGallery('${task.id}', window.appController.getCardSlideIndex('${task.id}'))" title="คลิกเพื่อดูรูปภาพขนาดใหญ่">
+              <img src="${this.escapeHtml(currentImg)}" class="card-slide-main-img" alt="${this.escapeHtml(task.title || 'ภาพผลงาน')}" loading="lazy">
+              
+              <div class="card-slide-counter">📷 ${activeSlideIndex + 1} / ${images.length}</div>
+              <div class="card-image-zoom-hint">🔍 ดูรูปใหญ่</div>
+              
+              <!-- High-Contrast Left/Right Slide Buttons -->
+              <button type="button" class="card-slide-btn card-slide-prev" onclick="window.appController.prevCardSlide('${task.id}', event)" title="รูปก่อนหน้า (◀)">
+                ❮
+              </button>
+              <button type="button" class="card-slide-btn card-slide-next" onclick="window.appController.nextCardSlide('${task.id}', event)" title="รูปถัดไป (▶)">
+                ❯
+              </button>
+            </div>
+
+            <!-- Thumbnail Strip Row -->
+            <div class="card-thumbs-strip">
+              ${images.map((img, idx) => `
+                <div class="card-thumb-item ${idx === activeSlideIndex ? 'active' : ''}" onclick="window.appController.setCardSlide('${task.id}', ${idx}, event)" title="ดูรูปที่ ${idx + 1}">
+                  <img src="${this.escapeHtml(img)}" alt="thumb ${idx + 1}">
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
       html += `
-        <div class="daily-task-card">
-          <!-- 1 Image Attachment -->
-          ${task.imageUrl ? `
-            <div class="task-image-wrapper" onclick="window.appController.openLightbox('${this.escapeHtml(task.imageUrl)}', '${this.escapeHtml(task.description || task.title)}')">
-              <img src="${this.escapeHtml(task.imageUrl)}" alt="${this.escapeHtml(task.title || 'task photo')}" loading="lazy">
-            </div>
-          ` : `
-            <div class="no-image-box" onclick="window.appController.openEditTaskModal('${task.id}')">
-              <span style="font-size: 1.4rem;">📷</span>
-              <span>ไม่มีรูปภาพ</span>
-              <span style="font-size: 0.78rem; text-decoration: underline; color: var(--accent-blue); cursor: pointer;">คลิกเพื่อแนบรูปภาพ</span>
-            </div>
-          `}
+        <div class="daily-task-card" id="task-card-${task.id}">
+          ${imagesHtml}
 
           <div class="task-card-body">
             <div class="task-date-row">

@@ -74,24 +74,33 @@
     margin-bottom: 24pt;
   }
 
-  .report-task-item {
+  .daily-task-card {
     border: 1px solid #ccc !important;
-    padding: 14pt !important;
+    page-break-inside: avoid;
     margin-bottom: 16pt !important;
-    page-break-inside: avoid;
-    border-radius: 6px;
+    box-shadow: none !important;
   }
 
-  .report-task-image {
-    max-height: 220px !important;
-    object-fit: contain !important;
-    margin: 10pt 0 !important;
-    page-break-inside: avoid;
+  .task-images-grid {
+    height: auto !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    background: transparent !important;
   }
 
-  .callout-box {
-    border: 1px solid #ddd !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+  .task-image-item {
+    flex: 1 1 calc(50% - 4px) !important;
+    max-height: 180px !important;
+    background: #fff !important;
+  }
+
+  .task-image-item img {
+    max-height: 180px !important;
+    object-fit: cover !important;
+  }
+
+  .more-images-overlay, .task-card-images-badge {
+    display: none !important;
   }
 }
