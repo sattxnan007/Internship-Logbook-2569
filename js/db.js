@@ -42,33 +42,50 @@ class StorageManager {
       localData = this.getLocalData();
     }
 
-    // 2. Try fetching from Cloud Firestore if available
-    if (window.firebaseService && typeof window.firebaseService.loadData === 'function') {
-      try {
-        const cloudData = await window.firebaseService.loadData();
-        if (cloudData && cloudData.months && cloudData.months.length > 0) {
-          // Cloud has fresh data! Sync into local storage & IndexedDB
-          this.saveLocalData(cloudData);
-          this.saveIdbData(cloudData).catch(() => {});
-          return cloudData;
-        } else if (localData && localData.months && localData.months.length > 0) {
-          // Cloud is newly created & empty, but local has user data -> Automatically push local data to Cloud!
-          console.log('Pushing local data to initialize Cloud Firestore...');
-          window.firebaseService.saveData(localData).catch(err => {
-            console.warn('Initial cloud sync error:', err);
-          });
-        }
-      } catch (e) {
-        console.warn('Firebase sync error on startup, using local data:', e);
-      }
+    // 2. If local cache has fewer filled entries than the bundled data, upgrade to bundled data
+    const getFilledCount = (d) => (d && d.tasks) ? d.tasks.filter(t => t.title && t.title.trim()).length : 0;
+    const defaultData = window.DEFAULT_SAMPLE_DATA;
+    if (defaultData && getFilledCount(localData) < getFilledCount(defaultData)) {
+      console.log('[StorageManager] Seeding with bundled real internship data...');
+      localData = JSON.parse(JSON.stringify(defaultData));
+      this.saveLocalData(localData);
+      this.saveIdbData(localData).catch(() => {});
     }
 
-    // 3. Fallback to local data
+    // 3. Asynchronous non-blocking Cloud sync (does NOT delay initial render)
+    if (window.firebaseService && typeof window.firebaseService.loadData === 'function') {
+      setTimeout(async () => {
+        try {
+          // Check if cloud has newer data or needs initial seeding
+          const cloudData = await window.firebaseService.loadData();
+          if (cloudData && cloudData.months && cloudData.months.length > 0) {
+            // Cloud has data
+            if (getFilledCount(cloudData) > getFilledCount(localData)) {
+              console.log('[StorageManager] Cloud has newer data, updating background cache...');
+              this.saveLocalData(cloudData);
+              this.saveIdbData(cloudData).catch(() => {});
+              if (window.appState) {
+                window.appState.load();
+              }
+            }
+          } else if (localData && getFilledCount(localData) > 0) {
+            console.log('[StorageManager] Cloud is empty, syncing local data to cloud in background...');
+            window.firebaseService.saveData(localData).catch(err => {
+              console.warn('Background cloud init error:', err);
+            });
+          }
+        } catch (e) {
+          console.warn('[StorageManager] Background cloud sync check:', e);
+        }
+      }, 1000);
+    }
+
+    // 4. Return immediately (< 5ms) for instant display
     if (localData && localData.months && localData.months.length > 0) {
       return localData;
     }
 
-    return null;
+    return defaultData || null;
   }
 
   async saveAllData(data) {
