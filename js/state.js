@@ -5,9 +5,11 @@
 const DEFAULT_LOCATION_INFO = {
   placeTitle: 'ข้อมูลสถานที่ฝึกงาน',
   placeName: 'บริษัท บุญรอดบริวเวอรี่ จำกัด',
-  placeDepartment: 'ฝ่าย Data Center Maintenance Division',
+  placeLine: 'สาย Engineering and Information Technology Business Unit',
+  placeGroup: 'กลุ่ม Infrastructure & Maintenance Services Team',
+  placeDepartment: 'ฝ่าย Data Center & Maintenance Systems Division',
   placeSection: 'แผนก Service Desk',
-  placeDescription: 'ฝ่าย Data Center Maintenance Division แผนก Service Desk',
+  placeDescription: 'สาย Engineering and Information Technology Business Unit กลุ่ม Infrastructure & Maintenance Services Team ฝ่าย Data Center & Maintenance Systems Division แผนก Service Desk',
   placeImage: 'img/boonrawd_building.jpg',
   supervisorTitle: 'ผู้ควบคุมการฝึกงาน',
   supervisorName: 'ธัญธนัช ชัยรัตน์',
@@ -50,6 +52,16 @@ class AppState {
       const saved = localStorage.getItem('ALL_INTERN_LOCATION_INFO');
       if (saved) {
         const parsed = JSON.parse(saved);
+        if (parsed && (parsed.placeDepartment === 'ฝ่าย Data Center Maintenance Division' || !parsed.placeLine)) {
+          parsed.placeLine = DEFAULT_LOCATION_INFO.placeLine;
+          parsed.placeGroup = DEFAULT_LOCATION_INFO.placeGroup;
+          parsed.placeDepartment = DEFAULT_LOCATION_INFO.placeDepartment;
+          parsed.placeSection = DEFAULT_LOCATION_INFO.placeSection;
+          parsed.placeDescription = DEFAULT_LOCATION_INFO.placeDescription;
+          try {
+            localStorage.setItem('ALL_INTERN_LOCATION_INFO', JSON.stringify({ ...DEFAULT_LOCATION_INFO, ...parsed }));
+          } catch (e) {}
+        }
         if (parsed && parsed.placeName && parsed.placeName.includes('บุญรอด')) {
           return { ...DEFAULT_LOCATION_INFO, ...parsed };
         }

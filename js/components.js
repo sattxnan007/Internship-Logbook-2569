@@ -318,14 +318,30 @@ const UI = {
             <div class="location-block-content">
               <div class="location-institute-name">${this.escapeHtml(loc.placeName || 'บริษัท บุญรอดบริวเวอรี่ จำกัด')}</div>
               <div class="location-dept-box">
+                ${loc.placeLine && loc.placeLine !== '-' ? `
+                <div class="location-dept-item">
+                  <span class="dept-badge badge-teal">สาย</span>
+                  <span class="dept-val"><strong>${this.escapeHtml(loc.placeLine.startsWith('สาย') ? loc.placeLine : `สาย ${loc.placeLine}`)}</strong></span>
+                </div>
+                ` : ''}
+                ${loc.placeGroup && loc.placeGroup !== '-' ? `
+                <div class="location-dept-item">
+                  <span class="dept-badge badge-purple">กลุ่ม</span>
+                  <span class="dept-val"><strong>${this.escapeHtml(loc.placeGroup.startsWith('กลุ่ม') ? loc.placeGroup : `กลุ่ม ${loc.placeGroup}`)}</strong></span>
+                </div>
+                ` : ''}
+                ${loc.placeDepartment && loc.placeDepartment !== '-' ? `
                 <div class="location-dept-item">
                   <span class="dept-badge">ฝ่าย</span>
-                  <span class="dept-val"><strong>${this.escapeHtml(loc.placeDepartment || 'Data Center Maintenance Division')}</strong></span>
+                  <span class="dept-val"><strong>${this.escapeHtml(loc.placeDepartment.startsWith('ฝ่าย') ? loc.placeDepartment : `ฝ่าย ${loc.placeDepartment}`)}</strong></span>
                 </div>
-                <div class="location-dept-item" style="margin-top: 6px;">
+                ` : ''}
+                ${loc.placeSection && loc.placeSection !== '-' ? `
+                <div class="location-dept-item">
                   <span class="dept-badge badge-blue">แผนก</span>
-                  <span class="dept-val"><strong>${this.escapeHtml(loc.placeSection || 'Service Desk')}</strong></span>
+                  <span class="dept-val"><strong>${this.escapeHtml(loc.placeSection.startsWith('แผนก') ? loc.placeSection : `แผนก ${loc.placeSection}`)}</strong></span>
                 </div>
+                ` : ''}
               </div>
             </div>
           </div>

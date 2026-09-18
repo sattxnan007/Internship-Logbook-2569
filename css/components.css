@@ -1588,6 +1588,19 @@ textarea.form-control {
   border: 1px solid rgba(2, 132, 199, 0.2);
   min-width: 44px;
   text-align: center;
+  flex-shrink: 0;
+}
+
+.dept-badge.badge-teal {
+  background: rgba(13, 148, 136, 0.1);
+  color: #0d9488;
+  border-color: rgba(13, 148, 136, 0.2);
+}
+
+.dept-badge.badge-purple {
+  background: rgba(124, 58, 237, 0.1);
+  color: #7c3aed;
+  border-color: rgba(124, 58, 237, 0.2);
 }
 
 .dept-badge.badge-blue {

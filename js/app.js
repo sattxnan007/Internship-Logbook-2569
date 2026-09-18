@@ -236,7 +236,15 @@ class AppController {
     const addrField = document.getElementById('loc-edit-address');
     const phoneField = document.getElementById('loc-edit-phone');
 
-    if (placeField) placeField.value = `${loc.placeName || 'บริษัท บุญรอดบริวเวอรี่ จำกัด'}\n${loc.placeDepartment || 'ฝ่าย Data Center Maintenance Division'}\n${loc.placeSection || 'แผนก Service Desk'}`.trim();
+    const lines = [
+      loc.placeName || 'บริษัท บุญรอดบริวเวอรี่ จำกัด',
+      loc.placeLine || 'สาย Engineering and Information Technology Business Unit',
+      loc.placeGroup || 'กลุ่ม Infrastructure & Maintenance Services Team',
+      loc.placeDepartment || 'ฝ่าย Data Center & Maintenance Systems Division',
+      loc.placeSection || 'แผนก Service Desk'
+    ].filter(Boolean);
+
+    if (placeField) placeField.value = lines.join('\n');
     if (supNameField) supNameField.value = loc.supervisorName || 'ธัญธนัช ชัยรัตน์';
     if (supRoleField) supRoleField.value = loc.supervisorRole || 'IT Support 1';
     if (addrField) addrField.value = loc.address || '999 ถนนสามเสน แขวงถนนนครไชยศรี เขตดุสิต กรุงเทพมหานคร 10300';
@@ -254,18 +262,37 @@ class AppController {
     }
 
     const placeVal = (document.getElementById('loc-edit-place-name')?.value || '').trim();
-    const placeLines = placeVal.split('\n');
+    const placeLines = placeVal.split('\n').map(l => l.trim()).filter(Boolean);
     const placeName = placeLines[0] || 'บริษัท บุญรอดบริวเวอรี่ จำกัด';
-    const placeDept = placeLines[1] || 'ฝ่าย Data Center Maintenance Division';
-    const placeSec = placeLines[2] || 'แผนก Service Desk';
+    
+    let placeLine = '';
+    let placeGroup = '';
+    let placeDept = '';
+    let placeSec = '';
+
+    if (placeLines.length >= 5) {
+      placeLine = placeLines[1];
+      placeGroup = placeLines[2];
+      placeDept = placeLines[3];
+      placeSec = placeLines[4];
+    } else if (placeLines.length === 4) {
+      placeLine = placeLines[1];
+      placeDept = placeLines[2];
+      placeSec = placeLines[3];
+    } else {
+      placeDept = placeLines[1] || 'ฝ่าย Data Center & Maintenance Systems Division';
+      placeSec = placeLines[2] || 'แผนก Service Desk';
+    }
 
     const addrVal = (document.getElementById('loc-edit-address')?.value || '').trim() || '999 ถนนสามเสน แขวงถนนนครไชยศรี เขตดุสิต กรุงเทพมหานคร 10300';
 
     const newInfo = {
       placeName: placeName,
-      placeDepartment: placeDept,
-      placeSection: placeSec,
-      placeDescription: `${placeDept} ${placeSec}`,
+      placeLine: placeLine || 'สาย Engineering and Information Technology Business Unit',
+      placeGroup: placeGroup || 'กลุ่ม Infrastructure & Maintenance Services Team',
+      placeDepartment: placeDept || 'ฝ่าย Data Center & Maintenance Systems Division',
+      placeSection: placeSec || 'แผนก Service Desk',
+      placeDescription: [placeLine, placeGroup, placeDept, placeSec].filter(Boolean).join(' '),
       supervisorName: (document.getElementById('loc-edit-supervisor-name')?.value || '').trim() || 'ธัญธนัช ชัยรัตน์',
       supervisorRole: (document.getElementById('loc-edit-supervisor-role')?.value || '').trim() || 'IT Support 1',
       companyName: placeName,
