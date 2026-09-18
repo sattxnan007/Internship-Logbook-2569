@@ -235,16 +235,12 @@ class AppController {
     const supRoleField = document.getElementById('loc-edit-supervisor-role');
     const addrField = document.getElementById('loc-edit-address');
     const phoneField = document.getElementById('loc-edit-phone');
-    const faxField = document.getElementById('loc-edit-fax');
-    const emailField = document.getElementById('loc-edit-email');
 
-    if (placeField) placeField.value = `${loc.placeName || ''}\n${loc.placeDescription || ''}`.trim();
-    if (supNameField) supNameField.value = loc.supervisorName || '';
-    if (supRoleField) supRoleField.value = loc.supervisorRole || '';
-    if (addrField) addrField.value = `${loc.universityName ? loc.universityName + '\n' : ''}${loc.address || ''}`.trim();
-    if (phoneField) phoneField.value = loc.phone || '';
-    if (faxField) faxField.value = loc.fax || '';
-    if (emailField) emailField.value = loc.email || '';
+    if (placeField) placeField.value = `${loc.placeName || 'บริษัท บุญรอดบริวเวอรี่ จำกัด'}\n${loc.placeDepartment || 'ฝ่าย Data Center Maintenance Division'}\n${loc.placeSection || 'แผนก Service Desk'}`.trim();
+    if (supNameField) supNameField.value = loc.supervisorName || 'ธัญธนัช ชัยรัตน์';
+    if (supRoleField) supRoleField.value = loc.supervisorRole || 'IT Support 1';
+    if (addrField) addrField.value = loc.address || '999 ถนนสามเสน แขวงถนนนครไชยศรี เขตดุสิต กรุงเทพมหานคร 10300';
+    if (phoneField) phoneField.value = loc.phone || '02 242 4000';
 
     const modal = document.getElementById('location-edit-modal');
     if (modal) modal.classList.add('active');
@@ -259,24 +255,22 @@ class AppController {
 
     const placeVal = (document.getElementById('loc-edit-place-name')?.value || '').trim();
     const placeLines = placeVal.split('\n');
-    const placeName = placeLines[0] || '';
-    const placeDesc = placeLines.slice(1).join(' ').trim();
+    const placeName = placeLines[0] || 'บริษัท บุญรอดบริวเวอรี่ จำกัด';
+    const placeDept = placeLines[1] || 'ฝ่าย Data Center Maintenance Division';
+    const placeSec = placeLines[2] || 'แผนก Service Desk';
 
-    const addrVal = (document.getElementById('loc-edit-address')?.value || '').trim();
-    const addrLines = addrVal.split('\n');
-    const uniName = addrLines[0] || 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ';
-    const address = addrLines.length > 1 ? addrLines.slice(1).join('\n') : addrVal;
+    const addrVal = (document.getElementById('loc-edit-address')?.value || '').trim() || '999 ถนนสามเสน แขวงถนนนครไชยศรี เขตดุสิต กรุงเทพมหานคร 10300';
 
     const newInfo = {
-      placeName: placeName || 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ',
-      placeDescription: placeDesc || 'ฝ่ายเทคโนโลยีสารสนเทศและการสื่อสาร / ส่วนงานฝึกสหกิจศึกษา',
-      supervisorName: (document.getElementById('loc-edit-supervisor-name')?.value || '').trim() || 'นาย สุพพัด กองแก้ว',
-      supervisorRole: (document.getElementById('loc-edit-supervisor-role')?.value || '').trim() || 'นายช่างเทคนิค',
-      universityName: uniName,
-      address: address,
-      phone: (document.getElementById('loc-edit-phone')?.value || '').trim() || '0-2555-2000',
-      fax: (document.getElementById('loc-edit-fax')?.value || '').trim() || '0-2587-4350',
-      email: (document.getElementById('loc-edit-email')?.value || '').trim() || 'contact@op.kmutnb.ac.th'
+      placeName: placeName,
+      placeDepartment: placeDept,
+      placeSection: placeSec,
+      placeDescription: `${placeDept} ${placeSec}`,
+      supervisorName: (document.getElementById('loc-edit-supervisor-name')?.value || '').trim() || 'ธัญธนัช ชัยรัตน์',
+      supervisorRole: (document.getElementById('loc-edit-supervisor-role')?.value || '').trim() || 'IT Support 1',
+      companyName: placeName,
+      address: addrVal,
+      phone: (document.getElementById('loc-edit-phone')?.value || '').trim() || '02 242 4000'
     };
 
     window.appState.saveLocationInfo(newInfo);

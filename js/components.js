@@ -282,11 +282,12 @@ const UI = {
   // --------------------------------------------------------------------------
   renderLocationView(state) {
     const loc = state.locationInfo || (typeof DEFAULT_LOCATION_INFO !== 'undefined' ? DEFAULT_LOCATION_INFO : {});
+    const mapUrl = loc.mapUrl || 'https://www.google.co.th/maps/search/999+%E0%B8%96%E0%B8%99%E0%B8%99%E0%B8%AA%E0%B8%B2%E0%B8%A1%E0%B9%80%E0%B8%AA%E0%B8%99+%E0%B8%96%E0%B8%99%E0%B8%99%E0%B8%99%E0%B8%84%E0%B8%A3%E0%B9%84%E0%B8%8A%E0%B8%A2%E0%B8%A8%E0%B8%A3%E0%B8%B5+%E0%B9%80%E0%B8%82%E0%B8%95%E0%B8%94%E0%B8%B8%E0%B8%AA%E0%B8%B4%E0%B8%95+%E0%B8%81%E0%B8%A3%E0%B8%B8%E0%B8%87%E0%B9%80%E0%B8%97%E0%B8%9E%E0%B8%A1%E0%B8%AB%E0%B8%B2%E0%B8%99%E0%B8%84%E0%B8%A3+%7C+%28%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%A9%E0%B8%B1%E0%B8%97+%E0%B8%9A%E0%B8%B8%E0%B8%8D%E0%B8%A3%E0%B8%AD%E0%B8%94%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%A7%E0%B9%80%E0%B8%A7%E0%B8%AD%E0%B8%A3%E0%B8%B5%E0%B9%88+%E0%B8%88%E0%B8%B3%E0%B8%81%E0%B8%B1%E0%B8%94%29';
 
     return `
       <div class="location-page-container">
         
-        <!-- Header Banner matching Image 3 -->
+        <!-- Header Banner -->
         <div class="location-header-banner">
           <h1 class="location-main-title">INTERNSHIP LOCATION</h1>
           <div class="location-title-accent-bar"></div>
@@ -301,11 +302,11 @@ const UI = {
           ` : ''}
         </div>
 
-        <!-- Section 1: ข้อมูลสถานที่ฝึกงาน (รูปป้าย มจพ.) -->
+        <!-- Section 1: ข้อมูลสถานที่ฝึกงาน (บริษัท บุญรอดบริวเวอรี่ จำกัด) -->
         <div class="location-section-row">
           <div class="location-media-col">
-            <div class="location-img-wrap" onclick="window.appController.openImageInLightbox('img/location_kmutnb.jpg', '${this.escapeHtml(loc.placeTitle || 'ข้อมูลสถานที่ฝึกงาน')}')">
-              <img src="img/location_kmutnb.jpg" alt="${this.escapeHtml(loc.placeTitle || 'ข้อมูลสถานที่ฝึกงาน')}" class="location-photo-img">
+            <div class="location-img-wrap" onclick="window.appController.openImageInLightbox('img/boonrawd_building.jpg', '${this.escapeHtml(loc.placeName || 'บริษัท บุญรอดบริวเวอรี่ จำกัด')}')">
+              <img src="img/boonrawd_building.jpg" alt="${this.escapeHtml(loc.placeName || 'บริษัท บุญรอดบริวเวอรี่ จำกัด')}" class="location-photo-img">
               <span class="location-img-hint">🔍 คลิกดูรูปใหญ่</span>
             </div>
           </div>
@@ -315,20 +316,29 @@ const UI = {
               <div class="location-block-line"></div>
             </div>
             <div class="location-block-content">
-              <div class="location-institute-name">${this.escapeHtml(loc.placeName || 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ')}</div>
-              <div class="location-institute-desc">${this.escapeHtml(loc.placeDescription || 'ฝ่ายเทคโนโลยีสารสนเทศและการสื่อสาร / ส่วนงานฝึกสหกิจศึกษา')}</div>
-              <div class="location-ready-note">*(ข้อมูลพร้อมใช้งาน สามารถปรับแก้เพิ่มเติมได้)*</div>
+              <div class="location-institute-name">${this.escapeHtml(loc.placeName || 'บริษัท บุญรอดบริวเวอรี่ จำกัด')}</div>
+              <div class="location-dept-box">
+                <div class="location-dept-item">
+                  <span class="dept-badge">ฝ่าย</span>
+                  <span class="dept-val"><strong>${this.escapeHtml(loc.placeDepartment || 'Data Center Maintenance Division')}</strong></span>
+                </div>
+                <div class="location-dept-item" style="margin-top: 6px;">
+                  <span class="dept-badge badge-blue">แผนก</span>
+                  <span class="dept-val"><strong>${this.escapeHtml(loc.placeSection || 'Service Desk')}</strong></span>
+                </div>
+              </div>
+              <div class="location-ready-note">*(ข้อมูลพร้อมใช้งาน)*</div>
             </div>
           </div>
         </div>
 
         <div class="location-divider-dotted"></div>
 
-        <!-- Section 2: ผู้ควบคุมการฝึกงาน (รูปนาย สุพพัด กองแก้ว) -->
+        <!-- Section 2: ผู้ควบคุมการฝึกงาน (คุณธัญธนัช ชัยรัตน์) -->
         <div class="location-section-row">
           <div class="location-media-col">
-            <div class="location-img-wrap supervisor-wrap" onclick="window.appController.openImageInLightbox('img/supervisor.jpg', '${this.escapeHtml(loc.supervisorName || 'นาย สุพพัด กองแก้ว')} - ${this.escapeHtml(loc.supervisorRole || 'นายช่างเทคนิค')}')">
-              <img src="img/supervisor.jpg" alt="${this.escapeHtml(loc.supervisorName || 'นาย สุพพัด กองแก้ว')}" class="location-photo-img supervisor-photo">
+            <div class="location-img-wrap supervisor-wrap" onclick="window.appController.openImageInLightbox('img/supervisor_thanthanat.jpg', '${this.escapeHtml(loc.supervisorName || 'ธัญธนัช ชัยรัตน์')} - ${this.escapeHtml(loc.supervisorRole || 'IT Support 1')}')">
+              <img src="img/supervisor_thanthanat.jpg" alt="${this.escapeHtml(loc.supervisorName || 'ธัญธนัช ชัยรัตน์')}" class="location-photo-img supervisor-photo">
               <span class="location-img-hint">🔍 คลิกดูรูปใหญ่</span>
             </div>
           </div>
@@ -337,48 +347,53 @@ const UI = {
               <h3 class="location-block-title">${this.escapeHtml(loc.supervisorTitle || 'ผู้ควบคุมการฝึกงาน')}</h3>
             </div>
             <div class="location-block-content" style="text-align: center;">
-              <div class="supervisor-name">${this.escapeHtml(loc.supervisorName || 'นาย สุพพัด กองแก้ว')}</div>
+              <div class="supervisor-name">${this.escapeHtml(loc.supervisorName || 'ธัญธนัช ชัยรัตน์')}</div>
               <div class="supervisor-role-label">ตำแหน่ง:</div>
-              <div class="supervisor-role-val">${this.escapeHtml(loc.supervisorRole || 'นายช่างเทคนิค')}</div>
+              <div class="supervisor-role-val">${this.escapeHtml(loc.supervisorRole || 'IT Support 1')}</div>
             </div>
           </div>
         </div>
 
         <div class="location-divider-dotted"></div>
 
-        <!-- Section 3: สถานที่ตั้ง & ติดต่อ (รูปแผนที่ มจพ.) -->
+        <!-- Section 3: สถานที่ตั้ง & ติดต่อ (บริษัท บุญรอดบริวเวอรี่ จำกัด สามเสน) -->
         <div class="location-section-row">
           <div class="location-media-col">
-            <div class="location-img-wrap map-wrap" onclick="window.appController.openImageInLightbox('img/map.jpg', 'แผนที่สถานที่ตั้ง มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ')">
-              <img src="img/map.jpg" alt="แผนที่สถานที่ตั้ง" class="location-photo-img map-photo">
-              <span class="location-img-hint">🔍 คลิกดูรูปใหญ่</span>
+            <div class="location-map-container" style="border-radius: 12px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; height: 240px;">
+              <iframe 
+                title="แผนที่ บริษัท บุญรอดบริวเวอรี่ จำกัด"
+                src="https://maps.google.com/maps?q=999+%E0%B8%96%E0%B8%99%E0%B8%99%E0%B8%AA%E0%B8%B2%E0%B8%A1%E0%B9%80%E0%B8%AA%E0%B8%99+%E0%B9%81%E0%B8%82%E0%B8%A7%E0%B8%87%E0%B8%96%E0%B8%99%E0%B8%99%E0%B8%99%E0%B8%84%E0%B8%A3%E0%B9%84%E0%B8%8A%E0%B8%A2%E0%B8%A8%E0%B8%A3%E0%B8%B5+%E0%B9%80%E0%B8%82%E0%B8%95%E0%B8%94%E0%B8%B8%E0%B8%AA%E0%B8%B4%E0%B8%95+%E0%B8%81%E0%B8%A3%E0%B8%B8%E0%B8%87%E0%B9%80%E0%B8%97%E0%B8%9E%E0%B8%A1%E0%B8%AB%E0%B8%B2%E0%B8%99%E0%B8%84%E0%B8%A3+10300&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+                width="100%" 
+                height="100%" 
+                style="border:0;" 
+                allowfullscreen="" 
+                loading="lazy" 
+                referrerpolicy="no-referrer-when-downgrade">
+              </iframe>
             </div>
           </div>
           <div class="location-info-col">
             <div class="location-contact-group">
               <div class="location-orange-label">${this.escapeHtml(loc.locationTitle || 'สถานที่ตั้ง')}</div>
               <div class="location-address-text">
-                <div style="font-weight: 600; color: var(--text-main); margin-bottom: 2px;">${this.escapeHtml(loc.universityName || 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ')}</div>
-                <div>${(this.escapeHtml(loc.address || '1518 ถนนประชาราษฎร์ 1 แขวงวงศ์สว่าง เขตบางซื่อ กรุงเทพมหานคร 10800')).replace(/\n/g, '<br>')}</div>
+                <div style="font-weight: 700; color: var(--text-main); font-size: 1.05rem; margin-bottom: 4px;">
+                  ${this.escapeHtml(loc.companyName || loc.placeName || 'บริษัท บุญรอดบริวเวอรี่ จำกัด')}
+                </div>
+                <div>${(this.escapeHtml(loc.address || '999 ถนนสามเสน แขวงถนนนครไชยศรี เขตดุสิต กรุงเทพมหานคร 10300')).replace(/\n/g, '<br>')}</div>
               </div>
 
               <div class="location-orange-label" style="margin-top: 14px;">${this.escapeHtml(loc.contactTitle || 'ติดต่อ')}</div>
               <div class="location-contact-item">
                 <span class="contact-key">โทรศัพท์ :</span>
-                <a href="tel:${(loc.phone || '025552000').replace(/[^0-9]/g, '')}" class="contact-val-link">${this.escapeHtml(loc.phone || '0-2555-2000')}</a>
-              </div>
-              <div class="location-contact-item">
-                <span class="contact-key">แฟกซ์ :</span>
-                <span class="contact-val">${this.escapeHtml(loc.fax || '0-2587-4350')}</span>
-              </div>
-              <div class="location-contact-item">
-                <span class="contact-key">อีเมลติดต่อ :</span>
-                <a href="mailto:${this.escapeHtml(loc.email || 'contact@op.kmutnb.ac.th')}" class="contact-val-link">${this.escapeHtml(loc.email || 'contact@op.kmutnb.ac.th')}</a>
+                <a href="tel:${(loc.phone || '022424000').replace(/[^0-9]/g, '')}" class="contact-val-link">${this.escapeHtml(loc.phone || '02 242 4000')}</a>
               </div>
 
               <div class="location-action-btns">
-                <a href="https://maps.google.com/?q=King+Mongkut%27s+University+of+Technology+North+Bangkok" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+                <a href="${this.escapeHtml(mapUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
                   <span>🗺️ เปิดบน Google Maps</span>
+                </a>
+                <a href="tel:${(loc.phone || '022424000').replace(/[^0-9]/g, '')}" class="btn btn-secondary btn-sm">
+                  <span>📞 โทร 02 242 4000</span>
                 </a>
               </div>
             </div>

@@ -4,17 +4,23 @@
 
 const DEFAULT_LOCATION_INFO = {
   placeTitle: 'ข้อมูลสถานที่ฝึกงาน',
-  placeName: 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ',
-  placeDescription: 'ฝ่ายเทคโนโลยีสารสนเทศและการสื่อสาร / ส่วนงานฝึกสหกิจศึกษา มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ',
+  placeName: 'บริษัท บุญรอดบริวเวอรี่ จำกัด',
+  placeDepartment: 'ฝ่าย Data Center Maintenance Division',
+  placeSection: 'แผนก Service Desk',
+  placeDescription: 'ฝ่าย Data Center Maintenance Division แผนก Service Desk',
+  placeImage: 'img/boonrawd_building.jpg',
   supervisorTitle: 'ผู้ควบคุมการฝึกงาน',
-  supervisorName: 'นาย สุพพัด กองแก้ว',
-  supervisorRole: 'นายช่างเทคนิค',
+  supervisorName: 'ธัญธนัช ชัยรัตน์',
+  supervisorRole: 'IT Support 1',
+  supervisorImage: 'img/supervisor_thanthanat.jpg',
   locationTitle: 'สถานที่ตั้ง',
-  address: 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ\n1518 ถนนประชาราษฎร์ 1 แขวงวงศ์สว่าง เขตบางซื่อ กรุงเทพมหานคร 10800',
+  companyName: 'บริษัท บุญรอดบริวเวอรี่ จำกัด',
+  address: '999 ถนนสามเสน แขวงถนนนครไชยศรี เขตดุสิต กรุงเทพมหานคร 10300',
   contactTitle: 'ติดต่อ',
-  phone: '0-2555-2000',
-  fax: '0-2587-4350',
-  email: 'contact@op.kmutnb.ac.th'
+  phone: '02 242 4000',
+  fax: '',
+  email: '',
+  mapUrl: 'https://www.google.co.th/maps/search/999+%E0%B8%96%E0%B8%99%E0%B8%99%E0%B8%AA%E0%B8%B2%E0%B8%A1%E0%B9%80%E0%B8%AA%E0%B8%99+%E0%B8%96%E0%B8%99%E0%B8%99%E0%B8%99%E0%B8%84%E0%B8%A3%E0%B9%84%E0%B8%8A%E0%B8%A2%E0%B8%A8%E0%B8%A3%E0%B8%B5+%E0%B9%80%E0%B8%82%E0%B8%95%E0%B8%94%E0%B8%B8%E0%B8%AA%E0%B8%B4%E0%B8%95+%E0%B8%81%E0%B8%A3%E0%B8%B8%E0%B8%87%E0%B9%80%E0%B8%97%E0%B8%9E%E0%B8%A1%E0%B8%AB%E0%B8%B2%E0%B8%99%E0%B8%84%E0%B8%A3+%7C+%28%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%A9%E0%B8%B1%E0%B8%97+%E0%B8%9A%E0%B8%B8%E0%B8%8D%E0%B8%A3%E0%B8%AD%E0%B8%94%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%A7%E0%B9%80%E0%B8%A7%E0%B8%AD%E0%B8%A3%E0%B8%B5%E0%B9%88+%E0%B8%88%E0%B8%B3%E0%B8%81%E0%B8%B1%E0%B8%94%29'
 };
 
 class AppState {
@@ -43,7 +49,10 @@ class AppState {
     try {
       const saved = localStorage.getItem('ALL_INTERN_LOCATION_INFO');
       if (saved) {
-        return { ...DEFAULT_LOCATION_INFO, ...JSON.parse(saved) };
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.placeName && parsed.placeName.includes('บุญรอด')) {
+          return { ...DEFAULT_LOCATION_INFO, ...parsed };
+        }
       }
     } catch (e) {}
     return { ...DEFAULT_LOCATION_INFO };

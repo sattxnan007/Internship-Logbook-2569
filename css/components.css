@@ -1519,19 +1519,47 @@ textarea.form-control {
 }
 
 .supervisor-wrap {
-  max-width: 220px;
+  max-width: 250px;
   margin: 0 auto;
 }
 
 .supervisor-photo {
-  max-height: 240px;
-  object-fit: contain;
+  max-height: 270px;
+  object-fit: cover;
   margin: 0 auto;
 }
 
-.map-photo {
-  max-height: 220px;
-  object-fit: cover;
+.location-dept-box {
+  margin: 12px 0 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.location-dept-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.95rem;
+  color: #1e293b;
+}
+
+.dept-badge {
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(2, 132, 199, 0.1);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.2);
+  min-width: 44px;
+  text-align: center;
+}
+
+.dept-badge.badge-blue {
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
+  border-color: rgba(37, 99, 235, 0.2);
 }
 
 .location-img-hint {
