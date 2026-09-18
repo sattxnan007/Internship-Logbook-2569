@@ -30,35 +30,61 @@ const UI = {
     if (!container) return;
 
     let html = `
-      <div class="breadcrumb-item ${state.view === 'months' ? 'active' : ''}" onclick="window.appState.goToMonths()">
+      <div class="breadcrumb-item ${state.view === 'home' ? 'active' : ''}" onclick="window.appState.goToHome()">
         <span>🏠</span>
-        <span>รายเดือน</span>
+        <span>หน้าแรก</span>
       </div>
     `;
 
-    if (state.currentMonthId) {
-      const month = state.getCurrentMonth();
-      if (month) {
-        html += `
-          <span class="breadcrumb-separator">/</span>
-          <div class="breadcrumb-item ${state.view === 'weeks' ? 'active' : ''}" onclick="window.appState.goToMonth('${month.id}')">
-            <span>📅</span>
-            <span>${this.escapeHtml(month.title)}</span>
-          </div>
-        `;
-      }
-    }
+    if (state.view === 'location') {
+      html += `
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item active">
+          <span>📍</span>
+          <span>ข้อมูลสถานที่ฝึกสหกิจ</span>
+        </div>
+      `;
+    } else if (state.view === 'months') {
+      html += `
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item active">
+          <span>📋</span>
+          <span>บันทึกการปฏิบัติงานรายเดือน</span>
+        </div>
+      `;
+    } else if (state.view === 'weeks' || state.view === 'days') {
+      html += `
+        <span class="breadcrumb-separator">/</span>
+        <div class="breadcrumb-item" onclick="window.appState.goToMonths()">
+          <span>📋</span>
+          <span>รายเดือน</span>
+        </div>
+      `;
 
-    if (state.currentWeekId) {
-      const week = state.getCurrentWeek();
-      if (week) {
-        html += `
-          <span class="breadcrumb-separator">/</span>
-          <div class="breadcrumb-item active">
-            <span>📆</span>
-            <span>${this.escapeHtml(week.title)}</span>
-          </div>
-        `;
+      if (state.currentMonthId) {
+        const month = state.getCurrentMonth();
+        if (month) {
+          html += `
+            <span class="breadcrumb-separator">/</span>
+            <div class="breadcrumb-item ${state.view === 'weeks' ? 'active' : ''}" onclick="window.appState.goToMonth('${month.id}')">
+              <span>📅</span>
+              <span>${this.escapeHtml(month.title)}</span>
+            </div>
+          `;
+        }
+      }
+
+      if (state.currentWeekId) {
+        const week = state.getCurrentWeek();
+        if (week) {
+          html += `
+            <span class="breadcrumb-separator">/</span>
+            <div class="breadcrumb-item active">
+              <span>📆</span>
+              <span>${this.escapeHtml(week.title)}</span>
+            </div>
+          `;
+        }
       }
     }
 
@@ -66,6 +92,15 @@ const UI = {
   },
 
   renderSidebar(state) {
+    // Update active highlight on static nav items
+    const navHome = document.getElementById('nav-item-home');
+    const navLoc = document.getElementById('nav-item-location');
+    const navMonths = document.getElementById('nav-item-months');
+    
+    if (navHome) navHome.classList.toggle('active', state.view === 'home');
+    if (navLoc) navLoc.classList.toggle('active', state.view === 'location');
+    if (navMonths) navMonths.classList.toggle('active', state.view === 'months');
+
     const treeContainer = document.getElementById('sidebar-tree');
     if (!treeContainer) return;
 
@@ -105,6 +140,253 @@ const UI = {
   toggleTreeNode(nodeId) {
     const node = document.getElementById(nodeId);
     if (node) node.classList.toggle('expanded');
+  },
+
+  // --------------------------------------------------------------------------
+  // HOME VIEW (หน้าแรก - บันทึกการฝึกสหกิจ 2569)
+  // --------------------------------------------------------------------------
+  renderHomeView(state) {
+    const visibleMonths = state.getVisibleMonths ? state.getVisibleMonths() : (state.months || []);
+    const visibleWeeks = state.getVisibleWeeks ? state.getVisibleWeeks() : (state.weeks || []);
+    const visibleTasks = state.tasks ? state.tasks.filter(t => !state.isTaskHidden(t)) : [];
+
+    return `
+      <div class="home-page-container">
+        
+        <!-- Hero Student Profile Card (No student photo as requested) -->
+        <div class="home-hero-card">
+          <div class="home-hero-badge-row">
+            <span class="home-badge-tag">
+              <span class="badge-pulse-dot"></span>
+              ปีการศึกษา 2569 • ฝึกสหกิจศึกษา
+            </span>
+            <span class="home-badge-sub">มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ</span>
+          </div>
+
+          <div class="home-student-layout">
+            <!-- Academic Tech Emblem (Minimalist & Dignified) -->
+            <div class="home-student-emblem-box" title="สัญลักษณ์การศึกษาและเทคโนโลยี มจพ.">
+              <div class="home-emblem-icon">
+                <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                </svg>
+              </div>
+              <div class="home-emblem-label">KMUTNB • COOP</div>
+            </div>
+
+            <!-- Student Credentials Matching User Specification -->
+            <div class="home-student-details">
+              <h1 class="home-main-title">บันทึกการฝึกสหกิจ 2569</h1>
+              
+              <div class="home-author-row">
+                <span class="author-prefix">โดย</span>
+                <span class="author-name">นายเสฏฐนันท์ ทิพย์สังวาลย์</span>
+              </div>
+
+              <div class="home-credentials-list">
+                <div class="credential-item">
+                  <span class="cred-icon">👨‍🎓</span>
+                  <span class="cred-text"><strong>นักศึกษาภาควิชาคอมพิวเตอร์ศึกษา</strong></span>
+                </div>
+                <div class="credential-item">
+                  <span class="cred-icon">🏛️</span>
+                  <span class="cred-text">คณะครุศาสตร์อุตสาหกรรม</span>
+                </div>
+                <div class="credential-item">
+                  <span class="cred-icon">💻</span>
+                  <span class="cred-text">สาขาเทคโนโลยีคอมพิวเตอร์</span>
+                </div>
+                <div class="credential-item">
+                  <span class="cred-icon">🏫</span>
+                  <span class="cred-text">มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Access Dashboard Cards Grid -->
+        <div class="home-grid">
+          
+          <!-- Card 1: Internship Location Page -->
+          <div class="home-action-card" onclick="window.appState.goToLocation()">
+            <div class="action-card-top">
+              <div class="action-card-icon-box location-icon-bg">
+                📍
+              </div>
+              <span class="action-card-tag">สถานที่ฝึกสหกิจ</span>
+            </div>
+            <h3 class="action-card-title">ข้อมูลสถานที่ฝึกสหกิจ</h3>
+            <p class="action-card-desc">
+              ดูรายละเอียดสถานที่ฝึกสหกิจ ผู้ควบคุมการฝึกงาน และสถานที่ตั้งพร้อมแผนที่การเดินทาง
+            </p>
+            <div class="action-card-cta">
+              <span>ดูข้อมูลสถานที่ ➔</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Monthly Logbook View -->
+          <div class="home-action-card highlight" onclick="window.appState.goToMonths()">
+            <div class="action-card-top">
+              <div class="action-card-icon-box logbook-icon-bg">
+                📋
+              </div>
+              <span class="action-card-tag tag-blue">บันทึกผลงาน</span>
+            </div>
+            <h3 class="action-card-title">บันทึกผลการปฏิบัติงาน</h3>
+            <p class="action-card-desc">
+              เข้าสู่บันทึกผลการปฏิบัติงานรายเดือน รายสัปดาห์ และบันทึกงานประจำวัน (Daily Tasks) พร้อมภาพถ่าย
+            </p>
+            <div class="action-card-cta">
+              <span>เปิดดูบันทึกงาน ➔</span>
+            </div>
+          </div>
+
+          <!-- Card 3: Summary Stats -->
+          <div class="home-action-card" onclick="window.appState.goToMonths()">
+            <div class="action-card-top">
+              <div class="action-card-icon-box stats-icon-bg">
+                📊
+              </div>
+              <span class="action-card-tag tag-green">ภาพรวมสถิติ</span>
+            </div>
+            <h3 class="action-card-title">สถิติการปฏิบัติงาน</h3>
+            <div class="home-stats-preview">
+              <div class="stat-mini-pill">
+                <span class="stat-mini-num">${visibleMonths.length}</span>
+                <span class="stat-mini-label">เดือน</span>
+              </div>
+              <div class="stat-mini-pill">
+                <span class="stat-mini-num">${visibleWeeks.length}</span>
+                <span class="stat-mini-label">สัปดาห์</span>
+              </div>
+              <div class="stat-mini-pill">
+                <span class="stat-mini-num">${visibleTasks.length}</span>
+                <span class="stat-mini-label">บันทึกงาน</span>
+              </div>
+            </div>
+            <div class="action-card-cta">
+              <span>เข้าสู่รายเดือน ➔</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+  },
+
+  // --------------------------------------------------------------------------
+  // LOCATION VIEW (ข้อมูลสถานที่ฝึกสหกิจ - INTERNSHIP LOCATION)
+  // --------------------------------------------------------------------------
+  renderLocationView(state) {
+    const loc = state.locationInfo || (typeof DEFAULT_LOCATION_INFO !== 'undefined' ? DEFAULT_LOCATION_INFO : {});
+
+    return `
+      <div class="location-page-container">
+        
+        <!-- Header Banner matching Image 3 -->
+        <div class="location-header-banner">
+          <h1 class="location-main-title">INTERNSHIP LOCATION</h1>
+          <div class="location-title-accent-bar"></div>
+          <p class="location-main-subtitle">ข้อมูลสถานที่ฝึกสหกิจ ผู้ควบคุมการฝึกงาน และข้อมูลติดต่อ</p>
+
+          ${state.isAdmin ? `
+            <div style="margin-top: 14px;">
+              <button class="btn btn-secondary btn-sm" onclick="window.appController.openLocationEditModal()">
+                <span>✏️ แก้ไขข้อมูลสถานที่ (Admin)</span>
+              </button>
+            </div>
+          ` : ''}
+        </div>
+
+        <!-- Section 1: ข้อมูลสถานที่ฝึกงาน (รูปป้าย มจพ.) -->
+        <div class="location-section-row">
+          <div class="location-media-col">
+            <div class="location-img-wrap" onclick="window.appController.openImageInLightbox('img/location_kmutnb.jpg', '${this.escapeHtml(loc.placeTitle || 'ข้อมูลสถานที่ฝึกงาน')}')">
+              <img src="img/location_kmutnb.jpg" alt="${this.escapeHtml(loc.placeTitle || 'ข้อมูลสถานที่ฝึกงาน')}" class="location-photo-img">
+              <span class="location-img-hint">🔍 คลิกดูรูปใหญ่</span>
+            </div>
+          </div>
+          <div class="location-info-col">
+            <div class="location-block-header">
+              <h3 class="location-block-title">${this.escapeHtml(loc.placeTitle || 'ข้อมูลสถานที่ฝึกงาน')}</h3>
+              <div class="location-block-line"></div>
+            </div>
+            <div class="location-block-content">
+              <div class="location-institute-name">${this.escapeHtml(loc.placeName || 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ')}</div>
+              <div class="location-institute-desc">${this.escapeHtml(loc.placeDescription || 'ฝ่ายเทคโนโลยีสารสนเทศและการสื่อสาร / ส่วนงานฝึกสหกิจศึกษา')}</div>
+              <div class="location-ready-note">*(ข้อมูลพร้อมใช้งาน สามารถปรับแก้เพิ่มเติมได้)*</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="location-divider-dotted"></div>
+
+        <!-- Section 2: ผู้ควบคุมการฝึกงาน (รูปนาย สุพพัด กองแก้ว) -->
+        <div class="location-section-row">
+          <div class="location-media-col">
+            <div class="location-img-wrap supervisor-wrap" onclick="window.appController.openImageInLightbox('img/supervisor.jpg', '${this.escapeHtml(loc.supervisorName || 'นาย สุพพัด กองแก้ว')} - ${this.escapeHtml(loc.supervisorRole || 'นายช่างเทคนิค')}')">
+              <img src="img/supervisor.jpg" alt="${this.escapeHtml(loc.supervisorName || 'นาย สุพพัด กองแก้ว')}" class="location-photo-img supervisor-photo">
+              <span class="location-img-hint">🔍 คลิกดูรูปใหญ่</span>
+            </div>
+          </div>
+          <div class="location-info-col">
+            <div class="location-block-header">
+              <h3 class="location-block-title">${this.escapeHtml(loc.supervisorTitle || 'ผู้ควบคุมการฝึกงาน')}</h3>
+            </div>
+            <div class="location-block-content" style="text-align: center;">
+              <div class="supervisor-name">${this.escapeHtml(loc.supervisorName || 'นาย สุพพัด กองแก้ว')}</div>
+              <div class="supervisor-role-label">ตำแหน่ง:</div>
+              <div class="supervisor-role-val">${this.escapeHtml(loc.supervisorRole || 'นายช่างเทคนิค')}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="location-divider-dotted"></div>
+
+        <!-- Section 3: สถานที่ตั้ง & ติดต่อ (รูปแผนที่ มจพ.) -->
+        <div class="location-section-row">
+          <div class="location-media-col">
+            <div class="location-img-wrap map-wrap" onclick="window.appController.openImageInLightbox('img/map.jpg', 'แผนที่สถานที่ตั้ง มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ')">
+              <img src="img/map.jpg" alt="แผนที่สถานที่ตั้ง" class="location-photo-img map-photo">
+              <span class="location-img-hint">🔍 คลิกดูรูปใหญ่</span>
+            </div>
+          </div>
+          <div class="location-info-col">
+            <div class="location-contact-group">
+              <div class="location-orange-label">${this.escapeHtml(loc.locationTitle || 'สถานที่ตั้ง')}</div>
+              <div class="location-address-text">
+                <div style="font-weight: 600; color: var(--text-main); margin-bottom: 2px;">${this.escapeHtml(loc.universityName || 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ')}</div>
+                <div>${(this.escapeHtml(loc.address || '1518 ถนนประชาราษฎร์ 1 แขวงวงศ์สว่าง เขตบางซื่อ กรุงเทพมหานคร 10800')).replace(/\n/g, '<br>')}</div>
+              </div>
+
+              <div class="location-orange-label" style="margin-top: 14px;">${this.escapeHtml(loc.contactTitle || 'ติดต่อ')}</div>
+              <div class="location-contact-item">
+                <span class="contact-key">โทรศัพท์ :</span>
+                <a href="tel:${(loc.phone || '025552000').replace(/[^0-9]/g, '')}" class="contact-val-link">${this.escapeHtml(loc.phone || '0-2555-2000')}</a>
+              </div>
+              <div class="location-contact-item">
+                <span class="contact-key">แฟกซ์ :</span>
+                <span class="contact-val">${this.escapeHtml(loc.fax || '0-2587-4350')}</span>
+              </div>
+              <div class="location-contact-item">
+                <span class="contact-key">อีเมลติดต่อ :</span>
+                <a href="mailto:${this.escapeHtml(loc.email || 'contact@op.kmutnb.ac.th')}" class="contact-val-link">${this.escapeHtml(loc.email || 'contact@op.kmutnb.ac.th')}</a>
+              </div>
+
+              <div class="location-action-btns">
+                <a href="https://maps.google.com/?q=King+Mongkut%27s+University+of+Technology+North+Bangkok" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+                  <span>🗺️ เปิดบน Google Maps</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    `;
   },
 
   // --------------------------------------------------------------------------

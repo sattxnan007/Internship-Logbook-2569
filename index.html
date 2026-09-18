@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Internship Tasks | บันทึกผลการปฏิบัติงานฝึกงาน</title>
-  <meta name="description" content="ระบบบันทึกผลการปฏิบัติงานฝึกงานสไตล์ Notion แยกรายเดือน รายอาทิตย์ และรายวัน พร้อมแนบรูปภาพและคำอธิบายใต้ภาพ">
+  <title>บันทึกการฝึกสหกิจ 2569 | Cooperative Education Logbook</title>
+  <meta name="description" content="ระบบบันทึกผลการปฏิบัติงานฝึกสหกิจ 2569 มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ">
   
   <!-- CSS Stylesheets with Cache Buster -->
-  <link rel="stylesheet" href="css/main.css?v=20260831_v6">
-  <link rel="stylesheet" href="css/components.css?v=20260831_v6">
-  <link rel="stylesheet" href="css/print.css?v=20260831_v6">
+  <link rel="stylesheet" href="css/main.css?v=20260918_v7">
+  <link rel="stylesheet" href="css/components.css?v=20260918_v7">
+  <link rel="stylesheet" href="css/print.css?v=20260918_v7">
 </head>
 <body>
 
@@ -18,9 +18,9 @@
     <!-- SIDEBAR -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <div class="workspace-title" onclick="window.appState.goToMonths()">
-          <span>📋</span>
-          <span>Internship Tasks</span>
+        <div class="workspace-title" onclick="window.appState.goToHome()" title="กลับหน้าแรก">
+          <span>🎓</span>
+          <span>ฝึกสหกิจ 2569</span>
         </div>
         <button class="sidebar-toggle-btn" onclick="window.appController.toggleSidebar()" title="ยุบแถบข้าง (ซ่อนแถบซ้าย)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
@@ -37,11 +37,21 @@
 
       <!-- Navigation Links -->
       <nav class="sidebar-nav">
-        <div class="nav-section-title">โครงสร้างฝึกงาน</div>
+        <div class="nav-section-title">เมนูหลัก & ฝึกสหกิจ</div>
         
-        <div class="nav-item" onclick="window.appState.goToMonths()">
+        <div class="nav-item" id="nav-item-home" onclick="window.appState.goToHome()">
           <span>🏠</span>
-          <span>ภาพรวมรายเดือน</span>
+          <span>หน้าแรก (Home)</span>
+        </div>
+
+        <div class="nav-item" id="nav-item-location" onclick="window.appState.goToLocation()">
+          <span>📍</span>
+          <span>ข้อมูลสถานที่ฝึกสหกิจ</span>
+        </div>
+
+        <div class="nav-item" id="nav-item-months" onclick="window.appState.goToMonths()">
+          <span>📋</span>
+          <span>บันทึกการปฏิบัติงาน (รายเดือน)</span>
         </div>
 
         <!-- Dynamic Tree Navigation -->
@@ -114,9 +124,9 @@
       <!-- Page Content -->
       <div class="page-content">
         
-        <div class="page-header-block">
-          <h1 class="page-title">📝 บันทึกผลการปฏิบัติงานฝึกงาน</h1>
-          <p class="page-subtitle">รวบรวมผลงานและภาพถ่ายการปฏิบัติงาน (รายเดือน ➔ รายอาทิตย์ ➔ รายวัน)</p>
+        <div class="page-header-block" id="main-page-header-block">
+          <h1 class="page-title" id="main-page-title">📝 บันทึกผลการปฏิบัติงานฝึกสหกิจ 2569</h1>
+          <p class="page-subtitle" id="main-page-subtitle">รวบรวมผลงานและภาพถ่ายการปฏิบัติงาน (รายเดือน ➔ รายอาทิตย์ ➔ รายวัน)</p>
         </div>
 
         <!-- Dynamic Container -->
@@ -317,8 +327,8 @@
   </div>
 
   <!-- 6. ADMIN LOGIN MODAL -->
-  <div class="modal-backdrop" id="admin-login-modal">
-    <div class="modal-dialog" style="max-width: 400px;">
+  <div class="modal-overlay" id="admin-login-modal" onclick="if(event.target === this) window.appController.closeAllModals()">
+    <div class="modal-window" onclick="event.stopPropagation()" style="max-width: 420px;">
       <div class="modal-header">
         <h3 class="modal-title">🔐 เข้าสู่ระบบผู้ดูแลระบบ (Admin)</h3>
         <button class="modal-close-btn" type="button" onclick="window.appController.closeAllModals()">&times;</button>
@@ -349,6 +359,56 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="window.appController.closeAllModals()">ยกเลิก</button>
           <button type="submit" class="btn btn-primary">เข้าสู่ระบบ</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 7. LOCATION INFO EDIT MODAL (Admin Only) -->
+  <div class="modal-overlay" id="location-edit-modal" onclick="if(event.target === this) window.appController.closeAllModals()">
+    <div class="modal-window" onclick="event.stopPropagation()" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3 class="modal-title">✏️ แก้ไขข้อมูลสถานที่ฝึกสหกิจ</h3>
+        <button class="modal-close-btn" type="button" onclick="window.appController.closeAllModals()">&times;</button>
+      </div>
+      <form id="location-edit-form" onsubmit="window.appController.handleSaveLocationInfo(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="loc-edit-place-name">🏢 ข้อมูลสถานที่ / หน่วยงานฝึกสหกิจ</label>
+            <textarea id="loc-edit-place-name" class="form-textarea" rows="3" placeholder="ระบุข้อมูลสถานที่ฝึกสหกิจ..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="loc-edit-supervisor-name">👤 ชื่อผู้ควบคุมการฝึกงาน</label>
+              <input type="text" id="loc-edit-supervisor-name" class="form-input" placeholder="เช่น นาย สุพพัด กองแก้ว">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="loc-edit-supervisor-role">💼 ตำแหน่ง</label>
+              <input type="text" id="loc-edit-supervisor-role" class="form-input" placeholder="เช่น นายช่างเทคนิค">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="loc-edit-address">📍 สถานที่ตั้ง</label>
+            <textarea id="loc-edit-address" class="form-textarea" rows="2" placeholder="ที่ตั้งสถานที่ฝึกสหกิจ..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label" for="loc-edit-phone">📞 โทรศัพท์</label>
+              <input type="text" id="loc-edit-phone" class="form-input" placeholder="เช่น 0-2555-2000">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="loc-edit-fax">📠 แฟกซ์</label>
+              <input type="text" id="loc-edit-fax" class="form-input" placeholder="เช่น 0-2587-4350">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="loc-edit-email">✉️ อีเมลติดต่อ</label>
+            <input type="email" id="loc-edit-email" class="form-input" placeholder="เช่น contact@op.kmutnb.ac.th">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.appController.closeAllModals()">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">บันทึกข้อมูลสถานที่</button>
         </div>
       </form>
     </div>

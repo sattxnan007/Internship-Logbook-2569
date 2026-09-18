@@ -41,10 +41,24 @@ class AppController {
       this.updateFilterUI();
       this.updateAdminUI();
 
+      // Show/hide standard page-header-block (Home and Location have custom hero designs)
+      const mainHeaderBlock = document.getElementById('main-page-header-block');
+      if (mainHeaderBlock) {
+        if (state.view === 'home' || state.view === 'location') {
+          mainHeaderBlock.style.display = 'none';
+        } else {
+          mainHeaderBlock.style.display = 'block';
+        }
+      }
+
       const mainContainer = document.getElementById('view-container');
       if (!mainContainer) return;
 
-      if (state.view === 'months') {
+      if (state.view === 'home') {
+        mainContainer.innerHTML = UI.renderHomeView(state);
+      } else if (state.view === 'location') {
+        mainContainer.innerHTML = UI.renderLocationView(state);
+      } else if (state.view === 'months') {
         mainContainer.innerHTML = UI.renderMonthsView(state);
       } else if (state.view === 'weeks') {
         mainContainer.innerHTML = UI.renderWeeklyView(state);
@@ -204,6 +218,70 @@ class AppController {
 
     const modal = document.getElementById('lightbox-modal');
     if (modal) modal.classList.add('active');
+  }
+
+  openImageInLightbox(imageUrl, caption = '') {
+    this.openLightbox(imageUrl, caption);
+  }
+
+  openLocationEditModal() {
+    if (!window.appState.isAdmin) {
+      this.openAdminLoginModal();
+      return;
+    }
+    const loc = window.appState.locationInfo || {};
+    const placeField = document.getElementById('loc-edit-place-name');
+    const supNameField = document.getElementById('loc-edit-supervisor-name');
+    const supRoleField = document.getElementById('loc-edit-supervisor-role');
+    const addrField = document.getElementById('loc-edit-address');
+    const phoneField = document.getElementById('loc-edit-phone');
+    const faxField = document.getElementById('loc-edit-fax');
+    const emailField = document.getElementById('loc-edit-email');
+
+    if (placeField) placeField.value = `${loc.placeName || ''}\n${loc.placeDescription || ''}`.trim();
+    if (supNameField) supNameField.value = loc.supervisorName || '';
+    if (supRoleField) supRoleField.value = loc.supervisorRole || '';
+    if (addrField) addrField.value = `${loc.universityName ? loc.universityName + '\n' : ''}${loc.address || ''}`.trim();
+    if (phoneField) phoneField.value = loc.phone || '';
+    if (faxField) faxField.value = loc.fax || '';
+    if (emailField) emailField.value = loc.email || '';
+
+    const modal = document.getElementById('location-edit-modal');
+    if (modal) modal.classList.add('active');
+  }
+
+  handleSaveLocationInfo(e) {
+    if (e) e.preventDefault();
+    if (!window.appState.isAdmin) {
+      this.showToast('กรุณาเข้าสู่ระบบ Admin ก่อนบันทึกข้อมูล', 'error');
+      return;
+    }
+
+    const placeVal = (document.getElementById('loc-edit-place-name')?.value || '').trim();
+    const placeLines = placeVal.split('\n');
+    const placeName = placeLines[0] || '';
+    const placeDesc = placeLines.slice(1).join(' ').trim();
+
+    const addrVal = (document.getElementById('loc-edit-address')?.value || '').trim();
+    const addrLines = addrVal.split('\n');
+    const uniName = addrLines[0] || 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ';
+    const address = addrLines.length > 1 ? addrLines.slice(1).join('\n') : addrVal;
+
+    const newInfo = {
+      placeName: placeName || 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ',
+      placeDescription: placeDesc || 'ฝ่ายเทคโนโลยีสารสนเทศและการสื่อสาร / ส่วนงานฝึกสหกิจศึกษา',
+      supervisorName: (document.getElementById('loc-edit-supervisor-name')?.value || '').trim() || 'นาย สุพพัด กองแก้ว',
+      supervisorRole: (document.getElementById('loc-edit-supervisor-role')?.value || '').trim() || 'นายช่างเทคนิค',
+      universityName: uniName,
+      address: address,
+      phone: (document.getElementById('loc-edit-phone')?.value || '').trim() || '0-2555-2000',
+      fax: (document.getElementById('loc-edit-fax')?.value || '').trim() || '0-2587-4350',
+      email: (document.getElementById('loc-edit-email')?.value || '').trim() || 'contact@op.kmutnb.ac.th'
+    };
+
+    window.appState.saveLocationInfo(newInfo);
+    this.closeAllModals();
+    this.showToast('บันทึกข้อมูลสถานที่ฝึกสหกิจเรียบร้อยแล้ว');
   }
 
   setLightboxIndex(index) {

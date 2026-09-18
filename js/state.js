@@ -2,9 +2,24 @@
  * Clean & Robust Application State
  */
 
+const DEFAULT_LOCATION_INFO = {
+  placeTitle: 'ข้อมูลสถานที่ฝึกงาน',
+  placeName: 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ',
+  placeDescription: 'ฝ่ายเทคโนโลยีสารสนเทศและการสื่อสาร / ส่วนงานฝึกสหกิจศึกษา มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ',
+  supervisorTitle: 'ผู้ควบคุมการฝึกงาน',
+  supervisorName: 'นาย สุพพัด กองแก้ว',
+  supervisorRole: 'นายช่างเทคนิค',
+  locationTitle: 'สถานที่ตั้ง',
+  address: 'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ\n1518 ถนนประชาราษฎร์ 1 แขวงวงศ์สว่าง เขตบางซื่อ กรุงเทพมหานคร 10800',
+  contactTitle: 'ติดต่อ',
+  phone: '0-2555-2000',
+  fax: '0-2587-4350',
+  email: 'contact@op.kmutnb.ac.th'
+};
+
 class AppState {
   constructor() {
-    this.view = 'months'; // 'months' | 'weeks' | 'days'
+    this.view = 'home'; // 'home' | 'location' | 'months' | 'weeks' | 'days'
     this.currentMonthId = null;
     this.currentWeekId = null;
     this.searchQuery = '';
@@ -15,11 +30,31 @@ class AppState {
     // Admin authentication mode: default is false (View-Only mode)
     this.isAdmin = sessionStorage.getItem('ALL_INTERN_IS_ADMIN') === 'true';
     
+    this.locationInfo = this.loadLocationInfo();
+
     this.months = [];
     this.weeks = [];
     this.tasks = [];
     
     this.listeners = [];
+  }
+
+  loadLocationInfo() {
+    try {
+      const saved = localStorage.getItem('ALL_INTERN_LOCATION_INFO');
+      if (saved) {
+        return { ...DEFAULT_LOCATION_INFO, ...JSON.parse(saved) };
+      }
+    } catch (e) {}
+    return { ...DEFAULT_LOCATION_INFO };
+  }
+
+  saveLocationInfo(info) {
+    this.locationInfo = { ...this.locationInfo, ...info };
+    try {
+      localStorage.setItem('ALL_INTERN_LOCATION_INFO', JSON.stringify(this.locationInfo));
+    } catch (e) {}
+    this.notify();
   }
 
   setAdmin(status) {
@@ -130,6 +165,20 @@ class AppState {
   }
 
   // Navigation
+  goToHome() {
+    this.view = 'home';
+    this.currentMonthId = null;
+    this.currentWeekId = null;
+    this.notify();
+  }
+
+  goToLocation() {
+    this.view = 'location';
+    this.currentMonthId = null;
+    this.currentWeekId = null;
+    this.notify();
+  }
+
   goToMonths() {
     this.view = 'months';
     this.currentMonthId = null;
