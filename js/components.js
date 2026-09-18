@@ -327,7 +327,6 @@ const UI = {
                   <span class="dept-val"><strong>${this.escapeHtml(loc.placeSection || 'Service Desk')}</strong></span>
                 </div>
               </div>
-              <div class="location-ready-note">*(ข้อมูลพร้อมใช้งาน)*</div>
             </div>
           </div>
         </div>

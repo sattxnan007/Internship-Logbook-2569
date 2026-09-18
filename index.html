@@ -341,16 +341,16 @@
 
           <div id="admin-login-error" class="admin-error-box" style="display: none;"></div>
 
-          <div class="form-group" style="margin-bottom: 14px;">
+          <div class="form-group" style="margin-bottom: 16px;">
             <label class="form-label" for="admin-username">👤 Username</label>
-            <input type="text" id="admin-username" class="form-input" placeholder="กรอก Username" required autocomplete="username">
+            <input type="text" id="admin-username" class="form-control" placeholder="กรอก Username" required autocomplete="username">
           </div>
 
-          <div class="form-group" style="margin-bottom: 8px;">
+          <div class="form-group" style="margin-bottom: 12px;">
             <label class="form-label" for="admin-password">🔑 Password</label>
-            <div style="position: relative; display: flex; align-items: center;">
-              <input type="password" id="admin-password" class="form-input" placeholder="กรอก Password" required autocomplete="current-password" style="padding-right: 42px;">
-              <button type="button" class="btn-toggle-pwd" id="btn-toggle-admin-pwd" onclick="window.appController.toggleAdminPasswordVisibility()" title="แสดง/ซ่อนรหัสผ่าน" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--text-sub); padding: 4px;">
+            <div class="password-input-wrapper">
+              <input type="password" id="admin-password" class="form-control" placeholder="กรอก Password" required autocomplete="current-password">
+              <button type="button" class="btn-toggle-pwd" id="btn-toggle-admin-pwd" onclick="window.appController.toggleAdminPasswordVisibility()" title="แสดง/ซ่อนรหัสผ่าน">
                 👁️
               </button>
             </div>
