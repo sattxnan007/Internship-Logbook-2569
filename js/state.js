@@ -30,8 +30,8 @@ class AppState {
     this.currentWeekId = null;
     this.searchQuery = '';
     
-    // Teacher submission mode (hide weeks 19+ and months 5-9): default is true
-    this.filterUpToSep18 = localStorage.getItem('ALL_INTERN_FILTER_SEP18') !== 'false';
+    // Teacher submission mode (hide weeks 19+ and months 5-9): default is false (all 9 months & 44 weeks visible)
+    this.filterUpToSep18 = localStorage.getItem('ALL_INTERN_FILTER_SEP18') === 'true';
 
     // Admin authentication mode: default is false (View-Only mode)
     this.isAdmin = sessionStorage.getItem('ALL_INTERN_IS_ADMIN') === 'true';
