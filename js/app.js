@@ -38,6 +38,7 @@ class AppController {
     try {
       UI.renderBreadcrumbs(state);
       UI.renderSidebar(state);
+      this.updateFilterUI();
 
       const mainContainer = document.getElementById('view-container');
       if (!mainContainer) return;
@@ -291,8 +292,8 @@ class AppController {
     if (!select) return;
 
     const state = window.appState;
-    const months = state.months || [];
-    const weeks = state.weeks || [];
+    const months = state.getVisibleMonths ? state.getVisibleMonths() : (state.months || []);
+    const weeks = state.getVisibleWeeks ? state.getVisibleWeeks() : (state.weeks || []);
 
     if (weeks.length === 0) {
       select.innerHTML = '<option value="">(จะสร้างสัปดาห์ที่ 1 อัตโนมัติ)</option>';
@@ -316,6 +317,39 @@ class AppController {
   }
 
   // =========================================================================
+  // TEACHER SUBMISSION MODE (<= 18 SEP 2026)
+  // =========================================================================
+  toggleFilterSep18() {
+    window.appState.toggleFilterSep18();
+    this.updateFilterUI();
+    if (window.appState.filterUpToSep18) {
+      this.showToast('เปิดโหมดส่งอาจารย์: แสดงข้อมูลถึง 18 ก.ย. 2569 แล้ว', 'success');
+    } else {
+      this.showToast('แสดงข้อมูลทั้งหมด: ครบ 44 สัปดาห์ (ถึง ก.พ. 2570) แล้ว', 'success');
+    }
+  }
+
+  updateFilterUI() {
+    const card = document.getElementById('filter-mode-card');
+    const desc = document.getElementById('filter-mode-desc');
+    const badge = document.getElementById('filter-mode-badge');
+    if (!card || !desc || !badge) return;
+
+    const isFiltered = window.appState.filterUpToSep18;
+    if (isFiltered) {
+      card.classList.remove('mode-all');
+      desc.textContent = 'แสดงถึง 18 ก.ย. (ซ่อนสัปดาห์ 19+)';
+      badge.textContent = 'เปิดอยู่';
+      badge.className = 'filter-mode-badge active';
+    } else {
+      card.classList.add('mode-all');
+      desc.textContent = 'แสดงทั้งหมด (44 สัปดาห์)';
+      badge.textContent = 'แสดงทั้งหมด';
+      badge.className = 'filter-mode-badge';
+    }
+  }
+
+  // =========================================================================
   // TASK MODAL (MULTIPLE IMAGES + 1 DESCRIPTION)
   // =========================================================================
   openAddTaskModal(targetWeekId) {
@@ -334,7 +368,8 @@ class AppController {
 
     document.getElementById('task-modal-title').innerHTML = '📝 เพิ่มบันทึกงานประจำวัน (Daily Task)';
 
-    const currentWeekId = targetWeekId || window.appState.currentWeekId || (window.appState.weeks[0]?.id || '');
+    const visibleWeeks = window.appState.getVisibleWeeks ? window.appState.getVisibleWeeks() : (window.appState.weeks || []);
+    const currentWeekId = targetWeekId || window.appState.currentWeekId || (visibleWeeks[0]?.id || '');
     this.populateWeekSelect(currentWeekId);
 
     document.getElementById('task-modal').classList.add('active');

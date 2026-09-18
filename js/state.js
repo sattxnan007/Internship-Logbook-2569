@@ -9,6 +9,9 @@ class AppState {
     this.currentWeekId = null;
     this.searchQuery = '';
     
+    // Teacher submission mode (hide weeks 19+ and months 5-9): default is true
+    this.filterUpToSep18 = localStorage.getItem('ALL_INTERN_FILTER_SEP18') !== 'false';
+    
     this.months = [];
     this.weeks = [];
     this.tasks = [];
@@ -52,6 +55,65 @@ class AppState {
     this.notify();
   }
 
+  // Filter Helpers for Teacher Submission Mode (<= 18 กันยายน 2569)
+  isMonthHidden(month) {
+    if (!this.filterUpToSep18) return false;
+    if (!month) return false;
+    const hiddenMonthIds = ['month_5', 'month_6', 'month_7', 'month_8', 'month_9'];
+    if (hiddenMonthIds.includes(month.id)) return true;
+    const monthNum = parseInt(String(month.id).replace(/\D/g, ''), 10);
+    return !isNaN(monthNum) && monthNum > 4;
+  }
+
+  isWeekHidden(week) {
+    if (!this.filterUpToSep18) return false;
+    if (!week) return false;
+    if (week.monthId && this.isMonthHidden({ id: week.monthId })) return true;
+    const weekNum = parseInt(String(week.id).replace(/\D/g, ''), 10);
+    if (!isNaN(weekNum) && weekNum > 18) return true;
+    return false;
+  }
+
+  isTaskHidden(task) {
+    if (!this.filterUpToSep18) return false;
+    if (!task) return false;
+    if (this.isWeekHidden({ id: task.weekId })) return true;
+    if (task.date && task.date > '2026-09-18') return true;
+    return false;
+  }
+
+  getVisibleMonths() {
+    return this.months.filter(m => !this.isMonthHidden(m));
+  }
+
+  getVisibleWeeks() {
+    return this.weeks.filter(w => !this.isWeekHidden(w));
+  }
+
+  toggleFilterSep18() {
+    this.filterUpToSep18 = !this.filterUpToSep18;
+    try {
+      localStorage.setItem('ALL_INTERN_FILTER_SEP18', this.filterUpToSep18 ? 'true' : 'false');
+    } catch (e) {}
+
+    // Check if current view is now hidden, if so navigate safely
+    if (this.filterUpToSep18) {
+      if (this.currentMonthId && this.isMonthHidden({ id: this.currentMonthId })) {
+        this.goToMonths();
+        return;
+      }
+      if (this.currentWeekId && this.isWeekHidden({ id: this.currentWeekId })) {
+        if (this.currentMonthId) {
+          this.goToMonth(this.currentMonthId);
+        } else {
+          this.goToMonths();
+        }
+        return;
+      }
+    }
+    this.notify();
+  }
+
   // Navigation
   goToMonths() {
     this.view = 'months';
@@ -81,21 +143,31 @@ class AppState {
 
   // Helpers
   getCurrentMonth() {
-    return this.months.find(m => m.id === this.currentMonthId) || this.months[0] || null;
+    const visibleMonths = this.getVisibleMonths();
+    if (this.currentMonthId) {
+      const found = visibleMonths.find(m => m.id === this.currentMonthId);
+      if (found) return found;
+    }
+    return visibleMonths[0] || null;
   }
 
   getCurrentWeek() {
-    return this.weeks.find(w => w.id === this.currentWeekId) || this.weeks[0] || null;
+    const visibleWeeks = this.getVisibleWeeks();
+    if (this.currentWeekId) {
+      const found = visibleWeeks.find(w => w.id === this.currentWeekId);
+      if (found) return found;
+    }
+    return visibleWeeks[0] || null;
   }
 
   getWeeksForMonth(monthId) {
     const mId = monthId || this.currentMonthId;
-    return this.weeks.filter(w => w.monthId === mId);
+    return this.weeks.filter(w => w.monthId === mId && !this.isWeekHidden(w));
   }
 
   getTasksForWeek(weekId) {
     const wId = weekId || this.currentWeekId;
-    let list = this.tasks.filter(t => t.weekId === wId);
+    let list = this.tasks.filter(t => t.weekId === wId && !this.isTaskHidden(t));
 
     if (this.searchQuery) {
       const q = this.searchQuery;

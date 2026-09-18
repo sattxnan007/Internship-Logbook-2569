@@ -44,8 +44,20 @@
           <span>ภาพรวมรายเดือน</span>
         </div>
 
-        <!-- Dynamic Tree Navigation -->
-        <div id="sidebar-tree"></div>
+          <!-- Teacher Submission Mode Toggle (<= 18 กันยายน 2569) -->
+          <div class="filter-mode-card" id="filter-mode-card" onclick="window.appController.toggleFilterSep18()" title="คลิกเพื่อสลับโหมดส่งอาจารย์ (แสดงถึง 18 ก.ย.) หรือแสดงทั้งหมด">
+            <div class="filter-mode-info">
+              <span class="filter-mode-icon">🎓</span>
+              <div style="flex: 1; min-width: 0;">
+                <div class="filter-mode-title">โหมดส่งงานอาจารย์</div>
+                <div class="filter-mode-desc" id="filter-mode-desc">แสดงถึง 18 ก.ย. (ซ่อนสัปดาห์ 19+)</div>
+              </div>
+            </div>
+            <span class="filter-mode-badge" id="filter-mode-badge">เปิดอยู่</span>
+          </div>
+
+          <!-- Dynamic Tree Navigation -->
+          <div id="sidebar-tree"></div>
 
         <div class="nav-section-title" style="margin-top: 14px;">การจัดการข้อมูล & คลาวด์</div>
 

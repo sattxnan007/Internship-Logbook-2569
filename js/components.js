@@ -70,7 +70,7 @@ const UI = {
     if (!treeContainer) return;
 
     let html = '';
-    const months = state.months || [];
+    const months = state.getVisibleMonths ? state.getVisibleMonths() : (state.months || []);
 
     months.forEach((month, idx) => {
       const weeks = state.getWeeksForMonth(month.id);
@@ -111,7 +111,7 @@ const UI = {
   // LEVEL 1: MONTHLY VIEW
   // --------------------------------------------------------------------------
   renderMonthsView(state) {
-    const months = state.months || [];
+    const months = state.getVisibleMonths ? state.getVisibleMonths() : (state.months || []);
 
     let html = `
       <div class="section-header">
@@ -139,7 +139,7 @@ const UI = {
     months.forEach((month, index) => {
       const weeks = state.getWeeksForMonth(month.id);
       const weekIds = weeks.map(w => w.id);
-      const tasksInMonth = (state.tasks || []).filter(t => weekIds.includes(t.weekId));
+      const tasksInMonth = (state.tasks || []).filter(t => weekIds.includes(t.weekId) && (!state.isTaskHidden || !state.isTaskHidden(t)));
 
       html += `
         <div class="month-card" onclick="window.appState.goToMonth('${month.id}')">

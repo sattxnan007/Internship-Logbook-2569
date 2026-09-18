@@ -987,3 +987,87 @@ textarea.form-control {
   line-height: 1.5;
 }
 
+/* --------------------------------------------------------------------------
+   TEACHER SUBMISSION MODE TOGGLE (SIDEBAR)
+   -------------------------------------------------------------------------- */
+.filter-mode-card {
+  margin: 6px 12px 12px 12px;
+  padding: 10px 12px;
+  background: #f0f7ff;
+  border: 1px solid #b6d8ff;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(9, 105, 218, 0.06);
+}
+
+.filter-mode-card:hover {
+  background: #e1effe;
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(9, 105, 218, 0.12);
+}
+
+.filter-mode-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-mode-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.filter-mode-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #0969da;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-mode-desc {
+  font-size: 0.74rem;
+  color: #57606a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-mode-badge {
+  align-self: flex-start;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #57606a;
+  color: #ffffff;
+  display: inline-block;
+  transition: background-color 0.2s ease;
+}
+
+.filter-mode-badge.active {
+  background: #0969da;
+}
+
+.filter-mode-card.mode-all {
+  background: #f6f8fa;
+  border-color: var(--border-light);
+  box-shadow: none;
+}
+
+.filter-mode-card.mode-all .filter-mode-title {
+  color: var(--text-main);
+}
+
+.filter-mode-card.mode-all:hover {
+  background: #eaecef;
+  border-color: #d0d7de;
+}
+
