@@ -69,7 +69,12 @@ html, body {
   flex-shrink: 0;
   user-select: none;
   z-index: 100;
-  transition: transform 0.2s ease;
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s ease;
+}
+
+/* Fix: Sidebar Collapsed (ซ่อนแถบข้างด้านซ้าย) */
+.sidebar.collapsed {
+  margin-left: calc(-1 * var(--sidebar-w));
 }
 
 .sidebar-header {
@@ -287,6 +292,36 @@ html, body {
   cursor: pointer;
   padding: 4px;
   color: var(--text-main);
+}
+
+.sidebar-expand-btn {
+  display: none;
+  background: transparent;
+  border: 1px solid var(--border-light);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 5px 8px;
+  color: var(--text-main);
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.sidebar-expand-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Show expand button when sidebar is collapsed */
+.sidebar.collapsed + .main-wrapper .sidebar-expand-btn {
+  display: inline-flex;
+}
+
+@media (max-width: 768px) {
+  .sidebar-expand-btn {
+    display: inline-flex;
+  }
 }
 
 .breadcrumb-container {

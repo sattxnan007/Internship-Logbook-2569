@@ -39,6 +39,7 @@ class AppController {
       UI.renderBreadcrumbs(state);
       UI.renderSidebar(state);
       this.updateFilterUI();
+      this.updateAdminUI();
 
       const mainContainer = document.getElementById('view-container');
       if (!mainContainer) return;
@@ -317,9 +318,140 @@ class AppController {
   }
 
   // =========================================================================
+  // SIDEBAR COLLAPSE / EXPAND TOGGLE (FIX FOR ซ่อนแถบ Task ด้านซ้าย)
+  // =========================================================================
+  toggleSidebar() {
+    const sb = document.getElementById('sidebar');
+    if (!sb) return;
+    sb.classList.toggle('collapsed');
+    sb.classList.toggle('open');
+  }
+
+  // =========================================================================
+  // ADMIN AUTHENTICATION (username: adminbrb / password: Kkongki.126)
+  // =========================================================================
+  openAdminLoginModal() {
+    const form = document.getElementById('admin-login-form');
+    if (form) form.reset();
+    const err = document.getElementById('admin-login-error');
+    if (err) {
+      err.textContent = '';
+      err.style.display = 'none';
+    }
+    const pwdInput = document.getElementById('admin-password');
+    if (pwdInput) pwdInput.type = 'password';
+    const btn = document.getElementById('btn-toggle-admin-pwd');
+    if (btn) btn.textContent = '👁️';
+
+    document.getElementById('admin-login-modal')?.classList.add('active');
+    setTimeout(() => {
+      document.getElementById('admin-username')?.focus();
+    }, 100);
+  }
+
+  toggleAdminPasswordVisibility() {
+    const pwd = document.getElementById('admin-password');
+    const btn = document.getElementById('btn-toggle-admin-pwd');
+    if (!pwd) return;
+    if (pwd.type === 'password') {
+      pwd.type = 'text';
+      if (btn) btn.textContent = '🙈';
+    } else {
+      pwd.type = 'password';
+      if (btn) btn.textContent = '👁️';
+    }
+  }
+
+  handleAdminLogin(e) {
+    if (e) e.preventDefault();
+    const user = (document.getElementById('admin-username')?.value || '').trim();
+    const pass = document.getElementById('admin-password')?.value || '';
+    const err = document.getElementById('admin-login-error');
+
+    if (user === 'adminbrb' && pass === 'Kkongki.126') {
+      window.appState.setAdmin(true);
+      this.closeAllModals();
+      this.showToast('✅ เข้าสู่ระบบ Admin สำเร็จ! ปลดล็อคโหมดแก้ไขข้อมูลแล้ว', 'success');
+    } else {
+      if (err) {
+        err.innerHTML = '<span>⚠️</span> <span>Username หรือ Password ไม่ถูกต้อง (เฉพาะ adminbrb เท่านั้น)</span>';
+        err.style.display = 'flex';
+      }
+    }
+  }
+
+  adminLogout() {
+    window.appState.setAdmin(false);
+    this.showToast('ออกจากระบบ Admin แล้ว (เข้าสู่โหมดดูอย่างเดียว)', 'info');
+  }
+
+  updateAdminUI() {
+    const isAdmin = window.appState.isAdmin;
+
+    // 1. Sidebar Admin Management Section
+    const adminSection = document.getElementById('sidebar-admin-section');
+    if (adminSection) {
+      adminSection.style.display = isAdmin ? 'block' : 'none';
+    }
+
+    // 2. Sidebar Footer Actions
+    const sidebarFooter = document.getElementById('sidebar-footer');
+    if (sidebarFooter) {
+      if (isAdmin) {
+        sidebarFooter.innerHTML = `
+          <button class="btn btn-primary btn-sm" style="width: 100%; justify-content: center; margin-bottom: 6px;" onclick="window.appController.openAddTaskModal()">
+            <span>➕ เพิ่ม Daily Task</span>
+          </button>
+          <button class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center; color: var(--danger);" onclick="window.appController.adminLogout()">
+            <span>🔓 ออกจากระบบ (adminbrb)</span>
+          </button>
+        `;
+      } else {
+        sidebarFooter.innerHTML = `
+          <button class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center;" onclick="window.appController.openAdminLoginModal()">
+            <span>🔐 เข้าสู่ระบบ Admin</span>
+          </button>
+        `;
+      }
+    }
+
+    // 3. Top Navbar Actions
+    const navbarActions = document.getElementById('navbar-admin-actions');
+    if (navbarActions) {
+      if (isAdmin) {
+        navbarActions.innerHTML = `
+          <div class="admin-pill-badge" title="อยู่ในโหมดผู้ดูแลระบบ">
+            <span>👑 Admin (adminbrb)</span>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="window.appController.openAddTaskModal()">
+            <span>➕ เพิ่มงานประจำวัน (Daily Task)</span>
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="window.appController.adminLogout()" title="ออกจากระบบ Admin กลับสู่โหมดดูอย่างเดียว">
+            <span>ออกจากระบบ</span>
+          </button>
+        `;
+      } else {
+        navbarActions.innerHTML = `
+          <div class="view-only-tag" title="โหมดดูอย่างเดียวสำหรับผู้เข้าชมและอาจารย์">
+            <span>👁️ โหมดดูอย่างเดียว</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="window.appController.openAdminLoginModal()">
+            <span>🔐 เข้าสู่ระบบ Admin</span>
+          </button>
+        `;
+      }
+    }
+  }
+
+  // =========================================================================
   // TEACHER SUBMISSION MODE (<= 18 SEP 2026)
   // =========================================================================
   toggleFilterSep18() {
+    if (!window.appState.isAdmin) {
+      this.showToast('กรุณาเข้าสู่ระบบ Admin ก่อนเปลี่ยนโหมดการแสดงผล', 'error');
+      this.openAdminLoginModal();
+      return;
+    }
     window.appState.toggleFilterSep18();
     this.updateFilterUI();
     if (window.appState.filterUpToSep18) {
@@ -353,6 +485,11 @@ class AppController {
   // TASK MODAL (MULTIPLE IMAGES + 1 DESCRIPTION)
   // =========================================================================
   openAddTaskModal(targetWeekId) {
+    if (!window.appState.isAdmin) {
+      this.showToast('กรุณาเข้าสู่ระบบ Admin ก่อนเพิ่มบันทึกงาน', 'error');
+      this.openAdminLoginModal();
+      return;
+    }
     this.editingTaskId = null;
     this.uploadedImages = [];
 
@@ -376,6 +513,11 @@ class AppController {
   }
 
   openEditTaskModal(taskId) {
+    if (!window.appState.isAdmin) {
+      this.showToast('กรุณาเข้าสู่ระบบ Admin ก่อนแก้ไขบันทึกงาน', 'error');
+      this.openAdminLoginModal();
+      return;
+    }
     const state = window.appState;
     const task = state.tasks.find(t => t.id === taskId);
     if (!task) return;
@@ -650,6 +792,11 @@ class AppController {
   }
 
   async deleteTask(taskId) {
+    if (!window.appState.isAdmin) {
+      this.showToast('กรุณาเข้าสู่ระบบ Admin ก่อนลบบันทึกงาน', 'error');
+      this.openAdminLoginModal();
+      return;
+    }
     if (confirm('คุณต้องการลบบันทึกงานนี้ใช่หรือไม่?')) {
       const state = window.appState;
       state.tasks = state.tasks.filter(t => t.id !== taskId);
@@ -662,6 +809,11 @@ class AppController {
   // MONTH MODAL
   // =========================================================================
   openAddMonthModal() {
+    if (!window.appState.isAdmin) {
+      this.showToast('กรุณาเข้าสู่ระบบ Admin ก่อนเพิ่มเดือน', 'error');
+      this.openAdminLoginModal();
+      return;
+    }
     this.editingMonthId = null;
     const form = document.getElementById('month-form');
     if (form) form.reset();
@@ -670,6 +822,11 @@ class AppController {
   }
 
   openEditMonthModal(monthId) {
+    if (!window.appState.isAdmin) {
+      this.showToast('กรุณาเข้าสู่ระบบ Admin ก่อนแก้ไขเดือน', 'error');
+      this.openAdminLoginModal();
+      return;
+    }
     const state = window.appState;
     const month = state.months.find(m => m.id === monthId);
     if (!month) return;
@@ -716,6 +873,11 @@ class AppController {
   // WEEK MODAL
   // =========================================================================
   openAddWeekModal(monthId) {
+    if (!window.appState.isAdmin) {
+      this.showToast('กรุณาเข้าสู่ระบบ Admin ก่อนเพิ่มสัปดาห์', 'error');
+      this.openAdminLoginModal();
+      return;
+    }
     this.editingWeekId = null;
     const form = document.getElementById('week-form');
     if (form) form.reset();
@@ -725,6 +887,11 @@ class AppController {
   }
 
   openEditWeekModal(weekId) {
+    if (!window.appState.isAdmin) {
+      this.showToast('กรุณาเข้าสู่ระบบ Admin ก่อนแก้ไขสัปดาห์', 'error');
+      this.openAdminLoginModal();
+      return;
+    }
     const state = window.appState;
     const week = state.weeks.find(w => w.id === weekId);
     if (!week) return;
@@ -793,6 +960,11 @@ class AppController {
   }
 
   importBackupPrompt() {
+    if (!window.appState.isAdmin) {
+      this.showToast('กรุณาเข้าสู่ระบบ Admin ก่อนนำเข้าข้อมูล', 'error');
+      this.openAdminLoginModal();
+      return;
+    }
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -821,7 +993,12 @@ class AppController {
   }
 
   async resetData() {
-    if (confirm('คุณต้องการรีเซ็ตข้อมูลตัวอย่างใหม่หรือไม่?')) {
+    if (!window.appState.isAdmin) {
+      this.showToast('กรุณาเข้าสู่ระบบ Admin ก่อนรีเซ็ตข้อมูล', 'error');
+      this.openAdminLoginModal();
+      return;
+    }
+    if (confirm('คำเตือน: ข้อมูลทั้งหมดจะถูกรีเซ็ตกลับเป็นข้อมูลตัวอย่างเริ่มต้น ต้องการดำเนินการต่อหรือไม่?')) {
       const sample = JSON.parse(JSON.stringify(window.DEFAULT_SAMPLE_DATA));
       window.appState.months = sample.months;
       window.appState.weeks = sample.weeks;
@@ -885,6 +1062,11 @@ class AppController {
   }
 
   openCloudModal() {
+    if (!window.appState.isAdmin) {
+      this.showToast('กรุณาเข้าสู่ระบบ Admin ก่อนจัดการ Cloud', 'error');
+      this.openAdminLoginModal();
+      return;
+    }
     const modal = document.getElementById('cloud-modal');
     if (modal) {
       modal.classList.add('active');

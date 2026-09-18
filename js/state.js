@@ -11,12 +11,27 @@ class AppState {
     
     // Teacher submission mode (hide weeks 19+ and months 5-9): default is true
     this.filterUpToSep18 = localStorage.getItem('ALL_INTERN_FILTER_SEP18') !== 'false';
+
+    // Admin authentication mode: default is false (View-Only mode)
+    this.isAdmin = sessionStorage.getItem('ALL_INTERN_IS_ADMIN') === 'true';
     
     this.months = [];
     this.weeks = [];
     this.tasks = [];
     
     this.listeners = [];
+  }
+
+  setAdmin(status) {
+    this.isAdmin = !!status;
+    try {
+      if (this.isAdmin) {
+        sessionStorage.setItem('ALL_INTERN_IS_ADMIN', 'true');
+      } else {
+        sessionStorage.removeItem('ALL_INTERN_IS_ADMIN');
+      }
+    } catch (e) {}
+    this.notify();
   }
 
   subscribe(listener) {

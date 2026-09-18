@@ -119,9 +119,11 @@ const UI = {
           <h2 class="section-title">📅 สรุปผลการปฏิบัติงานรายเดือน</h2>
           <p class="section-subtitle">คลิกเลือกเดือนเพื่อเข้าสู่มุมมองรายสัปดาห์ (Weekly) และบันทึกงานรายวัน (Daily)</p>
         </div>
-        <button class="btn btn-primary" onclick="window.appController.openAddMonthModal()">
-          <span>➕ เพิ่มเดือนใหม่</span>
-        </button>
+        ${state.isAdmin ? `
+          <button class="btn btn-primary" onclick="window.appController.openAddMonthModal()">
+            <span>➕ เพิ่มเดือนใหม่</span>
+          </button>
+        ` : ''}
       </div>
 
       <div class="months-grid">
@@ -130,8 +132,8 @@ const UI = {
     if (months.length === 0) {
       html += `
         <div style="grid-column: 1/-1; text-align: center; padding: 48px; background: #ffffff; border: 1px dashed var(--border-medium); border-radius: var(--radius-md);">
-          <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 1rem;">ยังไม่มีข้อมูลเดือน กดปุ่มด้านล่างเพื่อเริ่มสร้างเดือนแรก</p>
-          <button class="btn btn-primary" onclick="window.appController.openAddMonthModal()">➕ เพิ่มเดือนแรก</button>
+          <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 1rem;">ยังไม่มีข้อมูลเดือน</p>
+          ${state.isAdmin ? `<button class="btn btn-primary" onclick="window.appController.openAddMonthModal()">➕ เพิ่มเดือนแรก</button>` : ''}
         </div>
       `;
     }
@@ -186,10 +188,12 @@ const UI = {
           </div>
           ${month.goal ? `<p class="section-subtitle" style="margin-top: 4px;">🎯 ${this.escapeHtml(month.goal)}</p>` : ''}
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn btn-secondary" onclick="window.appController.openEditMonthModal('${month.id}')">✏️ แก้ไขเดือน</button>
-          <button class="btn btn-primary" onclick="window.appController.openAddWeekModal('${month.id}')">➕ เพิ่มสัปดาห์</button>
-        </div>
+        ${state.isAdmin ? `
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary" onclick="window.appController.openEditMonthModal('${month.id}')">✏️ แก้ไขเดือน</button>
+            <button class="btn btn-primary" onclick="window.appController.openAddWeekModal('${month.id}')">➕ เพิ่มสัปดาห์</button>
+          </div>
+        ` : ''}
       </div>
 
       <div class="weeks-container">
@@ -199,7 +203,7 @@ const UI = {
       html += `
         <div style="text-align: center; padding: 48px; background: #ffffff; border: 1px dashed var(--border-medium); border-radius: var(--radius-md);">
           <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 1rem;">ยังไม่มีสัปดาห์ในเดือนนี้</p>
-          <button class="btn btn-primary" onclick="window.appController.openAddWeekModal('${month.id}')">➕ เพิ่มสัปดาห์ที่ 1</button>
+          ${state.isAdmin ? `<button class="btn btn-primary" onclick="window.appController.openAddWeekModal('${month.id}')">➕ เพิ่มสัปดาห์ที่ 1</button>` : ''}
         </div>
       `;
     }
@@ -225,7 +229,7 @@ const UI = {
 
           <div class="week-stats">
             <span>📝 ${tasks.length} วัน (${imagesCount} รูป)</span>
-            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); window.appController.openEditWeekModal('${week.id}')">✏️ แก้ไข</button>
+            ${state.isAdmin ? `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); window.appController.openEditWeekModal('${week.id}')">✏️ แก้ไข</button>` : ''}
             <button class="btn btn-primary btn-sm" onclick="window.appState.goToWeek('${week.id}', '${month.id}')">เข้าดู ➔</button>
           </div>
         </div>
@@ -258,10 +262,12 @@ const UI = {
           </div>
           ${week.summary ? `<p class="section-subtitle" style="margin-top: 4px;">💡 ${this.escapeHtml(week.summary)}</p>` : ''}
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn btn-secondary" onclick="window.appController.openEditWeekModal('${week.id}')">✏️ แก้ไขสัปดาห์</button>
-          <button class="btn btn-primary" onclick="window.appController.openAddTaskModal('${week.id}')">➕ เพิ่มบันทึกรายวัน</button>
-        </div>
+        ${state.isAdmin ? `
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-secondary" onclick="window.appController.openEditWeekModal('${week.id}')">✏️ แก้ไขสัปดาห์</button>
+            <button class="btn btn-primary" onclick="window.appController.openAddTaskModal('${week.id}')">➕ เพิ่มบันทึกรายวัน</button>
+          </div>
+        ` : ''}
       </div>
 
       <div class="daily-tasks-grid">
@@ -271,7 +277,7 @@ const UI = {
       html += `
         <div style="grid-column: 1/-1; text-align: center; padding: 48px; background: #ffffff; border: 1px dashed var(--border-medium); border-radius: var(--radius-md);">
           <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 1rem;">ยังไม่มีบันทึกประจำวันสำหรับสัปดาห์นี้</p>
-          <button class="btn btn-primary" onclick="window.appController.openAddTaskModal('${week.id}')">➕ เพิ่มบันทึกวันแรก</button>
+          ${state.isAdmin ? `<button class="btn btn-primary" onclick="window.appController.openAddTaskModal('${week.id}')">➕ เพิ่มบันทึกวันแรก</button>` : ''}
         </div>
       `;
     }
@@ -291,10 +297,10 @@ const UI = {
 
       if (images.length === 0) {
         imagesHtml = `
-          <div class="no-image-box" onclick="window.appController.openEditTaskModal('${task.id}')" title="คลิกเพื่อแนบรูปภาพ">
+          <div class="no-image-box" ${state.isAdmin ? `onclick="window.appController.openEditTaskModal('${task.id}')" title="คลิกเพื่อแนบรูปภาพ"` : ''}>
             <span style="font-size: 1.5rem;">📷</span>
             <span style="font-weight: 600;">ยังไม่มีรูปภาพ</span>
-            <span style="font-size: 0.8rem; color: var(--primary); text-decoration: underline;">คลิกเพื่อแนบรูปภาพ</span>
+            ${state.isAdmin ? `<span style="font-size: 0.8rem; color: var(--primary); text-decoration: underline;">คลิกเพื่อแนบรูปภาพ</span>` : ''}
           </div>
         `;
       } else if (images.length === 1) {
@@ -355,10 +361,12 @@ const UI = {
             </div>
           </div>
 
-          <div class="task-card-footer">
-            <button class="btn btn-secondary btn-sm" onclick="window.appController.openEditTaskModal('${task.id}')">✏️ แก้ไข</button>
-            <button class="btn btn-danger btn-sm" onclick="window.appController.deleteTask('${task.id}')">🗑️ ลบ</button>
-          </div>
+          ${state.isAdmin ? `
+            <div class="task-card-footer">
+              <button class="btn btn-secondary btn-sm" onclick="window.appController.openEditTaskModal('${task.id}')">✏️ แก้ไข</button>
+              <button class="btn btn-danger btn-sm" onclick="window.appController.deleteTask('${task.id}')">🗑️ ลบ</button>
+            </div>
+          ` : ''}
         </div>
       `;
     });

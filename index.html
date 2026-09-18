@@ -22,7 +22,7 @@
           <span>📋</span>
           <span>Internship Tasks</span>
         </div>
-        <button class="sidebar-toggle-btn" onclick="document.getElementById('sidebar').classList.toggle('collapsed')" title="ยุบแถบข้าง">
+        <button class="sidebar-toggle-btn" onclick="window.appController.toggleSidebar()" title="ยุบแถบข้าง (ซ่อนแถบซ้าย)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/></svg>
         </button>
       </div>
@@ -44,6 +44,13 @@
           <span>ภาพรวมรายเดือน</span>
         </div>
 
+        <!-- Dynamic Tree Navigation -->
+        <div id="sidebar-tree"></div>
+
+        <!-- Admin Only Management Controls (ย้ายมาอยู่ในโหมด Admin เท่านั้น) -->
+        <div id="sidebar-admin-section" style="display: none;">
+          <div class="nav-section-title" style="margin-top: 14px;">👑 การจัดการข้อมูล (Admin)</div>
+
           <!-- Teacher Submission Mode Toggle (<= 18 กันยายน 2569) -->
           <div class="filter-mode-card" id="filter-mode-card" onclick="window.appController.toggleFilterSep18()" title="คลิกเพื่อสลับโหมดส่งอาจารย์ (แสดงถึง 18 ก.ย.) หรือแสดงทั้งหมด">
             <div class="filter-mode-info">
@@ -56,37 +63,31 @@
             <span class="filter-mode-badge" id="filter-mode-badge">เปิดอยู่</span>
           </div>
 
-          <!-- Dynamic Tree Navigation -->
-          <div id="sidebar-tree"></div>
+          <div class="nav-item" id="nav-cloud-status" onclick="window.appController.openCloudModal()" title="จัดการการเชื่อมต่อ Cloud Firestore">
+            <span id="cloud-status-icon">☁️</span>
+            <span style="flex: 1;">Cloud Sync</span>
+            <span id="cloud-status-badge" class="cloud-badge cloud-badge-connecting">เชื่อมต่อ...</span>
+          </div>
+          
+          <div class="nav-item" onclick="window.appController.exportBackup()">
+            <span>💾</span>
+            <span>สำรองข้อมูล (Export JSON)</span>
+          </div>
 
-        <div class="nav-section-title" style="margin-top: 14px;">การจัดการข้อมูล & คลาวด์</div>
+          <div class="nav-item" onclick="window.appController.importBackupPrompt()">
+            <span>📥</span>
+            <span>กู้คืนข้อมูล (Import JSON)</span>
+          </div>
 
-        <div class="nav-item" id="nav-cloud-status" onclick="window.appController.openCloudModal()" title="จัดการการเชื่อมต่อ Cloud Firestore">
-          <span id="cloud-status-icon">☁️</span>
-          <span style="flex: 1;">Cloud Sync</span>
-          <span id="cloud-status-badge" class="cloud-badge cloud-badge-connecting">เชื่อมต่อ...</span>
-        </div>
-        
-        <div class="nav-item" onclick="window.appController.exportBackup()">
-          <span>💾</span>
-          <span>สำรองข้อมูล (Export JSON)</span>
-        </div>
-
-        <div class="nav-item" onclick="window.appController.importBackupPrompt()">
-          <span>📥</span>
-          <span>กู้คืนข้อมูล (Import JSON)</span>
-        </div>
-
-        <div class="nav-item" onclick="window.appController.resetData()" style="color: var(--danger);">
-          <span>🔄</span>
-          <span>รีเซ็ตข้อมูลตัวอย่าง</span>
+          <div class="nav-item" onclick="window.appController.resetData()" style="color: var(--danger);">
+            <span>🔄</span>
+            <span>รีเซ็ตข้อมูลตัวอย่าง</span>
+          </div>
         </div>
       </nav>
 
-      <div class="sidebar-footer">
-        <button class="btn btn-secondary btn-sm" style="width: 100%; justify-content: center;" onclick="window.appController.openAddTaskModal()">
-          <span>➕ เพิ่ม Daily Task</span>
-        </button>
+      <div class="sidebar-footer" id="sidebar-footer">
+        <!-- Dynamically rendered by updateAdminUI() -->
       </div>
     </aside>
 
@@ -96,7 +97,8 @@
       <!-- Top Navbar -->
       <header class="top-navbar">
         <div class="navbar-left">
-          <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">
+          <!-- Button to Expand/Open Sidebar when collapsed or on mobile -->
+          <button class="sidebar-expand-btn" id="sidebar-expand-btn" onclick="window.appController.toggleSidebar()" title="เปิดแถบเมนูข้าง">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
           </button>
           
@@ -104,10 +106,8 @@
           <nav class="breadcrumb-container" id="breadcrumb-nav"></nav>
         </div>
 
-        <div style="display: flex; gap: 8px;">
-          <button class="btn btn-primary btn-sm" onclick="window.appController.openAddTaskModal()">
-            <span>➕ เพิ่มงานประจำวัน (Daily Task)</span>
-          </button>
+        <div id="navbar-admin-actions" style="display: flex; align-items: center; gap: 8px;">
+          <!-- Dynamically rendered by updateAdminUI() -->
         </div>
       </header>
 
@@ -313,6 +313,44 @@
     <div class="lightbox-bottom-bar">
       <div id="lightbox-caption" class="lightbox-caption" onclick="event.stopPropagation()"></div>
       <div id="lightbox-thumbs-container" class="lightbox-thumbs-container" onclick="event.stopPropagation()"></div>
+    </div>
+  </div>
+
+  <!-- 6. ADMIN LOGIN MODAL -->
+  <div class="modal-backdrop" id="admin-login-modal">
+    <div class="modal-dialog" style="max-width: 400px;">
+      <div class="modal-header">
+        <h3 class="modal-title">🔐 เข้าสู่ระบบผู้ดูแลระบบ (Admin)</h3>
+        <button class="modal-close-btn" type="button" onclick="window.appController.closeAllModals()">&times;</button>
+      </div>
+      <form id="admin-login-form" onsubmit="window.appController.handleAdminLogin(event)">
+        <div class="modal-body">
+          <p style="font-size: 0.86rem; color: var(--text-sub); margin-bottom: 16px;">
+            กรุณากรอก Username และ Password เพื่อเปิดโหมดจัดการและแก้ไขข้อมูล
+          </p>
+
+          <div id="admin-login-error" class="admin-error-box" style="display: none;"></div>
+
+          <div class="form-group" style="margin-bottom: 14px;">
+            <label class="form-label" for="admin-username">👤 Username</label>
+            <input type="text" id="admin-username" class="form-input" placeholder="กรอก Username" required autocomplete="username">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 8px;">
+            <label class="form-label" for="admin-password">🔑 Password</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="password" id="admin-password" class="form-input" placeholder="กรอก Password" required autocomplete="current-password" style="padding-right: 42px;">
+              <button type="button" class="btn-toggle-pwd" id="btn-toggle-admin-pwd" onclick="window.appController.toggleAdminPasswordVisibility()" title="แสดง/ซ่อนรหัสผ่าน" style="position: absolute; right: 8px; background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--text-sub); padding: 4px;">
+                👁️
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="window.appController.closeAllModals()">ยกเลิก</button>
+          <button type="submit" class="btn btn-primary">เข้าสู่ระบบ</button>
+        </div>
+      </form>
     </div>
   </div>
 
