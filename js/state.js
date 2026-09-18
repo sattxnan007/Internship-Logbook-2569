@@ -32,8 +32,12 @@ class AppState {
     this.currentWeekId = null;
     this.searchQuery = '';
     
-    // Teacher submission mode (hide weeks 19+ and months 5-9): default is false (all 9 months & 44 weeks visible)
-    this.filterUpToSep18 = localStorage.getItem('ALL_INTERN_FILTER_SEP18') === 'true';
+    // Filter mode (hide weeks 19+ and months 5-9): default is true (showing data up to 18 September 2569)
+    try {
+      localStorage.removeItem('ALL_INTERN_FILTER_SEP18');
+    } catch (e) {}
+    const savedFilter = localStorage.getItem('ALL_INTERN_FILTER_SEP18_V2');
+    this.filterUpToSep18 = savedFilter !== null ? savedFilter === 'true' : true;
 
     // Admin authentication mode: default is false (View-Only mode)
     this.isAdmin = sessionStorage.getItem('ALL_INTERN_IS_ADMIN') === 'true';
@@ -164,7 +168,8 @@ class AppState {
   toggleFilterSep18() {
     this.filterUpToSep18 = !this.filterUpToSep18;
     try {
-      localStorage.setItem('ALL_INTERN_FILTER_SEP18', this.filterUpToSep18 ? 'true' : 'false');
+      localStorage.setItem('ALL_INTERN_FILTER_SEP18_V2', this.filterUpToSep18 ? 'true' : 'false');
+      localStorage.removeItem('ALL_INTERN_FILTER_SEP18');
     } catch (e) {}
 
     // Check if current view is now hidden, if so navigate safely
